@@ -1,0 +1,21 @@
+syntax = "proto3";
+option go_package = "github.com/cjdenio/uta-trax-api/proto";
+
+message VehicleFeed {
+  enum Line {
+    LINE_UNSPECIFIED = 0;
+    GREEN = 1;
+    RED = 2;
+    BLUE = 3;
+    STREETCAR = 4;
+  }
+
+  message Vehicle {
+    float lat = 1;
+    float lon = 2;
+    Line line = 3;
+    int32 direction = 4;
+  }
+
+  repeated Vehicle vehicles = 1;
+}
