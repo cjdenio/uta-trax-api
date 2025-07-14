@@ -128,6 +128,10 @@ func main() {
 
 	http.Handle("/", http.FileServer(http.Dir("./static")))
 
+	http.HandleFunc("/schema.proto", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, "./proto/schema.proto")
+	})
+
 	http.HandleFunc("/api", func(w http.ResponseWriter, r *http.Request) {
 		vehicles, err := getVehicles()
 		if err != nil {

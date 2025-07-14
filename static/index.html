@@ -43,25 +43,21 @@
           '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>',
       }).addTo(map);
 
-      protobuf
-        .load(
-          "https://raw.githubusercontent.com/cjdenio/uta-trax-api/refs/heads/main/proto/schema.proto"
-        )
-        .then(async (root) => {
-          const bin = await fetch("/api").then((r) => r.arrayBuffer());
-          const { vehicles } = root
-            .lookupType("VehicleFeed")
-            .decode(new Uint8Array(bin));
+      protobuf.load("/schema.proto").then(async (root) => {
+        const bin = await fetch("/api").then((r) => r.arrayBuffer());
+        const { vehicles } = root
+          .lookupType("VehicleFeed")
+          .decode(new Uint8Array(bin));
 
-          vehicles.forEach((vehicle) => {
-            L.circle([vehicle.lat, vehicle.lon], {
-              fillColor: COLORS[vehicle.line],
-              color: COLORS[vehicle.line],
-              fillOpacity: 0.5,
-              radius: 200,
-            }).addTo(map);
-          });
+        vehicles.forEach((vehicle) => {
+          L.circle([vehicle.lat, vehicle.lon], {
+            fillColor: COLORS[vehicle.line],
+            color: COLORS[vehicle.line],
+            fillOpacity: 0.5,
+            radius: 200,
+          }).addTo(map);
         });
+      });
     </script>
   </body>
 </html>
