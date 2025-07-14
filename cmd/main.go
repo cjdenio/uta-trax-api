@@ -128,5 +128,5 @@ func main() {
 		w.Write(b)
 	})
 
-	http.ListenAndServe(":3000", nil)
+	http.ListenAndServe(":"+os.Getenv("PORT"), nil)
 }
