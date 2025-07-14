@@ -29,6 +29,7 @@ const (
 	VehicleFeed_RED              VehicleFeed_Line = 2
 	VehicleFeed_BLUE             VehicleFeed_Line = 3
 	VehicleFeed_STREETCAR        VehicleFeed_Line = 4
+	VehicleFeed_FRONTRUNNER      VehicleFeed_Line = 5
 )
 
 // Enum value maps for VehicleFeed_Line.
@@ -39,6 +40,7 @@ var (
 		2: "RED",
 		3: "BLUE",
 		4: "STREETCAR",
+		5: "FRONTRUNNER",
 	}
 	VehicleFeed_Line_value = map[string]int32{
 		"LINE_UNSPECIFIED": 0,
@@ -46,6 +48,7 @@ var (
 		"RED":              2,
 		"BLUE":             3,
 		"STREETCAR":        4,
+		"FRONTRUNNER":      5,
 	}
 )
 
@@ -126,6 +129,7 @@ type VehicleFeed_Vehicle struct {
 	Lon           float32                `protobuf:"fixed32,2,opt,name=lon,proto3" json:"lon,omitempty"`
 	Line          VehicleFeed_Line       `protobuf:"varint,3,opt,name=line,proto3,enum=VehicleFeed_Line" json:"line,omitempty"`
 	Direction     int32                  `protobuf:"varint,4,opt,name=direction,proto3" json:"direction,omitempty"`
+	Id            string                 `protobuf:"bytes,5,opt,name=id,proto3" json:"id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -188,24 +192,33 @@ func (x *VehicleFeed_Vehicle) GetDirection() int32 {
 	return 0
 }
 
+func (x *VehicleFeed_Vehicle) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
 var File_proto_schema_proto protoreflect.FileDescriptor
 
 const file_proto_schema_proto_rawDesc = "" +
 	"\n" +
-	"\x12proto/schema.proto\"\xfe\x01\n" +
+	"\x12proto/schema.proto\"\xa0\x02\n" +
 	"\vVehicleFeed\x120\n" +
-	"\bvehicles\x18\x01 \x03(\v2\x14.VehicleFeed.VehicleR\bvehicles\x1ar\n" +
+	"\bvehicles\x18\x01 \x03(\v2\x14.VehicleFeed.VehicleR\bvehicles\x1a\x82\x01\n" +
 	"\aVehicle\x12\x10\n" +
 	"\x03lat\x18\x01 \x01(\x02R\x03lat\x12\x10\n" +
 	"\x03lon\x18\x02 \x01(\x02R\x03lon\x12%\n" +
 	"\x04line\x18\x03 \x01(\x0e2\x11.VehicleFeed.LineR\x04line\x12\x1c\n" +
-	"\tdirection\x18\x04 \x01(\x05R\tdirection\"I\n" +
+	"\tdirection\x18\x04 \x01(\x05R\tdirection\x12\x0e\n" +
+	"\x02id\x18\x05 \x01(\tR\x02id\"Z\n" +
 	"\x04Line\x12\x14\n" +
 	"\x10LINE_UNSPECIFIED\x10\x00\x12\t\n" +
 	"\x05GREEN\x10\x01\x12\a\n" +
 	"\x03RED\x10\x02\x12\b\n" +
 	"\x04BLUE\x10\x03\x12\r\n" +
-	"\tSTREETCAR\x10\x04B'Z%github.com/cjdenio/uta-trax-api/protob\x06proto3"
+	"\tSTREETCAR\x10\x04\x12\x0f\n" +
+	"\vFRONTRUNNER\x10\x05B'Z%github.com/cjdenio/uta-trax-api/protob\x06proto3"
 
 var (
 	file_proto_schema_proto_rawDescOnce sync.Once

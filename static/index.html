@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+      integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+      crossorigin=""
+    />
+
+    <style>
+      html,
+      body {
+        margin: 0;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div id="map" style="height: 100vh"></div>
+
+    <script src="//cdn.jsdelivr.net/npm/protobufjs@7.X.X/dist/protobuf.min.js"></script>
+    <script
+      src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+      integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+      crossorigin=""
+    ></script>
+
+    <script>
+      const COLORS = {
+        1: "#2eb566",
+        2: "#be2036",
+        3: "#004a97",
+        4: "#77777a",
+        5: "#c227b9",
+      };
+
+      var map = L.map("map").setView([40.656734, -111.890818], 12);
+      L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        maxZoom: 19,
+        attribution:
+          '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+      }).addTo(map);
+
+      protobuf
+        .load(
+          "https://raw.githubusercontent.com/cjdenio/uta-trax-api/refs/heads/main/proto/schema.proto"
+        )
+        .then(async (root) => {
+          const bin = await fetch("/api").then((r) => r.arrayBuffer());
+          const { vehicles } = root
+            .lookupType("VehicleFeed")
+            .decode(new Uint8Array(bin));
+
+          vehicles.forEach((vehicle) => {
+            L.circle([vehicle.lat, vehicle.lon], {
+              fillColor: COLORS[vehicle.line],
+              color: COLORS[vehicle.line],
+              fillOpacity: 0.5,
+              radius: 200,
+            }).addTo(map);
+          });
+        });
+    </script>
+  </body>
+</html>

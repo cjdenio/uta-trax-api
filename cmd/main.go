@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"slices"
+	"strconv"
 
 	pb "github.com/cjdenio/uta-trax-api/proto"
 	"google.golang.org/protobuf/proto"
@@ -41,7 +42,7 @@ func getVehicles() ([]*pb.VehiclePosition, error) {
 
 type TripInfo struct {
 	Line      pb.VehicleFeed_Line
-	Direction int
+	Direction int32
 }
 
 var trips = make(map[string]*TripInfo)
@@ -61,11 +62,16 @@ func loadTrips() error {
 
 	route_id := slices.Index(header, "route_id")
 	trip_id := slices.Index(header, "trip_id")
-	// direction_id := slices.Index(header, "direction_id")
+	direction_id := slices.Index(header, "direction_id")
 
 	for {
 		if record, err := r.Read(); err == nil {
 			trip_info := new(TripInfo)
+
+			direction, err := strconv.ParseInt(record[direction_id], 10, 32)
+			if err == nil {
+				trip_info.Direction = int32(direction)
+			}
 
 			switch record[route_id] {
 			case "8246":
@@ -80,6 +86,9 @@ func loadTrips() error {
 			case "45389":
 				trip_info.Line = pb.VehicleFeed_STREETCAR
 				trips[record[trip_id]] = trip_info
+			case "41065":
+				trip_info.Line = pb.VehicleFeed_FRONTRUNNER
+				trips[record[trip_id]] = trip_info
 			}
 		} else {
 			break
@@ -90,7 +99,6 @@ func loadTrips() error {
 }
 
 func feedifyVehicles(vehicles []*pb.VehiclePosition) pb.VehicleFeed {
-
 	vehicle_feed := make([]*pb.VehicleFeed_Vehicle, 0, len(vehicles))
 
 	for _, vehicle := range vehicles {
@@ -100,9 +108,11 @@ func feedifyVehicles(vehicles []*pb.VehiclePosition) pb.VehicleFeed {
 		}
 
 		vehicle_feed = append(vehicle_feed, &pb.VehicleFeed_Vehicle{
-			Lat:  *vehicle.Position.Latitude,
-			Lon:  *vehicle.Position.Longitude,
-			Line: trip.Line,
+			Lat:       *vehicle.Position.Latitude,
+			Lon:       *vehicle.Position.Longitude,
+			Line:      trip.Line,
+			Id:        *vehicle.Vehicle.Id,
+			Direction: trip.Direction,
 		})
 	}
 
@@ -116,7 +126,9 @@ func main() {
 		log.Fatalln(err)
 	}
 
-	http.DefaultServeMux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+	http.Handle("/", http.FileServer(http.Dir("./static")))
+
+	http.HandleFunc("/api", func(w http.ResponseWriter, r *http.Request) {
 		vehicles, err := getVehicles()
 		if err != nil {
 			log.Fatalln(err)

@@ -8,6 +8,7 @@ message VehicleFeed {
     RED = 2;
     BLUE = 3;
     STREETCAR = 4;
+    FRONTRUNNER = 5;
   }
 
   message Vehicle {
@@ -15,6 +16,7 @@ message VehicleFeed {
     float lon = 2;
     Line line = 3;
     int32 direction = 4;
+    string id = 5;
   }
 
   repeated Vehicle vehicles = 1;
