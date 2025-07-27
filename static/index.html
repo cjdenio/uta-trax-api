@@ -55,7 +55,9 @@
             color: COLORS[vehicle.line],
             fillOpacity: 0.5,
             radius: 200,
-          }).addTo(map);
+          })
+            .addTo(map)
+            .bindPopup(vehicle.nearestStation.name);
         });
       });
     </script>

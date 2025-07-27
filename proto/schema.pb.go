@@ -123,20 +123,89 @@ func (x *VehicleFeed) GetVehicles() []*VehicleFeed_Vehicle {
 	return nil
 }
 
-type VehicleFeed_Vehicle struct {
+type VehicleFeed_Station struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Lat           float32                `protobuf:"fixed32,1,opt,name=lat,proto3" json:"lat,omitempty"`
-	Lon           float32                `protobuf:"fixed32,2,opt,name=lon,proto3" json:"lon,omitempty"`
-	Line          VehicleFeed_Line       `protobuf:"varint,3,opt,name=line,proto3,enum=VehicleFeed_Line" json:"line,omitempty"`
-	Direction     int32                  `protobuf:"varint,4,opt,name=direction,proto3" json:"direction,omitempty"`
-	Id            string                 `protobuf:"bytes,5,opt,name=id,proto3" json:"id,omitempty"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Name          string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	Lat           float32                `protobuf:"fixed32,3,opt,name=lat,proto3" json:"lat,omitempty"`
+	Lon           float32                `protobuf:"fixed32,4,opt,name=lon,proto3" json:"lon,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
+func (x *VehicleFeed_Station) Reset() {
+	*x = VehicleFeed_Station{}
+	mi := &file_proto_schema_proto_msgTypes[1]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *VehicleFeed_Station) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*VehicleFeed_Station) ProtoMessage() {}
+
+func (x *VehicleFeed_Station) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_schema_proto_msgTypes[1]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use VehicleFeed_Station.ProtoReflect.Descriptor instead.
+func (*VehicleFeed_Station) Descriptor() ([]byte, []int) {
+	return file_proto_schema_proto_rawDescGZIP(), []int{0, 0}
+}
+
+func (x *VehicleFeed_Station) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+func (x *VehicleFeed_Station) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *VehicleFeed_Station) GetLat() float32 {
+	if x != nil {
+		return x.Lat
+	}
+	return 0
+}
+
+func (x *VehicleFeed_Station) GetLon() float32 {
+	if x != nil {
+		return x.Lon
+	}
+	return 0
+}
+
+type VehicleFeed_Vehicle struct {
+	state          protoimpl.MessageState `protogen:"open.v1"`
+	Lat            float32                `protobuf:"fixed32,1,opt,name=lat,proto3" json:"lat,omitempty"`
+	Lon            float32                `protobuf:"fixed32,2,opt,name=lon,proto3" json:"lon,omitempty"`
+	Line           VehicleFeed_Line       `protobuf:"varint,3,opt,name=line,proto3,enum=VehicleFeed_Line" json:"line,omitempty"`
+	Direction      int32                  `protobuf:"varint,4,opt,name=direction,proto3" json:"direction,omitempty"`
+	Id             string                 `protobuf:"bytes,5,opt,name=id,proto3" json:"id,omitempty"`
+	NearestStation *VehicleFeed_Station   `protobuf:"bytes,6,opt,name=nearest_station,json=nearestStation,proto3" json:"nearest_station,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
+}
+
 func (x *VehicleFeed_Vehicle) Reset() {
 	*x = VehicleFeed_Vehicle{}
-	mi := &file_proto_schema_proto_msgTypes[1]
+	mi := &file_proto_schema_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -148,7 +217,7 @@ func (x *VehicleFeed_Vehicle) String() string {
 func (*VehicleFeed_Vehicle) ProtoMessage() {}
 
 func (x *VehicleFeed_Vehicle) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_schema_proto_msgTypes[1]
+	mi := &file_proto_schema_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -161,7 +230,7 @@ func (x *VehicleFeed_Vehicle) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use VehicleFeed_Vehicle.ProtoReflect.Descriptor instead.
 func (*VehicleFeed_Vehicle) Descriptor() ([]byte, []int) {
-	return file_proto_schema_proto_rawDescGZIP(), []int{0, 0}
+	return file_proto_schema_proto_rawDescGZIP(), []int{0, 1}
 }
 
 func (x *VehicleFeed_Vehicle) GetLat() float32 {
@@ -199,19 +268,32 @@ func (x *VehicleFeed_Vehicle) GetId() string {
 	return ""
 }
 
+func (x *VehicleFeed_Vehicle) GetNearestStation() *VehicleFeed_Station {
+	if x != nil {
+		return x.NearestStation
+	}
+	return nil
+}
+
 var File_proto_schema_proto protoreflect.FileDescriptor
 
 const file_proto_schema_proto_rawDesc = "" +
 	"\n" +
-	"\x12proto/schema.proto\"\xa0\x02\n" +
+	"\x12proto/schema.proto\"\xb2\x03\n" +
 	"\vVehicleFeed\x120\n" +
-	"\bvehicles\x18\x01 \x03(\v2\x14.VehicleFeed.VehicleR\bvehicles\x1a\x82\x01\n" +
+	"\bvehicles\x18\x01 \x03(\v2\x14.VehicleFeed.VehicleR\bvehicles\x1aQ\n" +
+	"\aStation\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
+	"\x04name\x18\x02 \x01(\tR\x04name\x12\x10\n" +
+	"\x03lat\x18\x03 \x01(\x02R\x03lat\x12\x10\n" +
+	"\x03lon\x18\x04 \x01(\x02R\x03lon\x1a\xc1\x01\n" +
 	"\aVehicle\x12\x10\n" +
 	"\x03lat\x18\x01 \x01(\x02R\x03lat\x12\x10\n" +
 	"\x03lon\x18\x02 \x01(\x02R\x03lon\x12%\n" +
 	"\x04line\x18\x03 \x01(\x0e2\x11.VehicleFeed.LineR\x04line\x12\x1c\n" +
 	"\tdirection\x18\x04 \x01(\x05R\tdirection\x12\x0e\n" +
-	"\x02id\x18\x05 \x01(\tR\x02id\"Z\n" +
+	"\x02id\x18\x05 \x01(\tR\x02id\x12=\n" +
+	"\x0fnearest_station\x18\x06 \x01(\v2\x14.VehicleFeed.StationR\x0enearestStation\"Z\n" +
 	"\x04Line\x12\x14\n" +
 	"\x10LINE_UNSPECIFIED\x10\x00\x12\t\n" +
 	"\x05GREEN\x10\x01\x12\a\n" +
@@ -233,20 +315,22 @@ func file_proto_schema_proto_rawDescGZIP() []byte {
 }
 
 var file_proto_schema_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_proto_schema_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
+var file_proto_schema_proto_msgTypes = make([]protoimpl.MessageInfo, 3)
 var file_proto_schema_proto_goTypes = []any{
 	(VehicleFeed_Line)(0),       // 0: VehicleFeed.Line
 	(*VehicleFeed)(nil),         // 1: VehicleFeed
-	(*VehicleFeed_Vehicle)(nil), // 2: VehicleFeed.Vehicle
+	(*VehicleFeed_Station)(nil), // 2: VehicleFeed.Station
+	(*VehicleFeed_Vehicle)(nil), // 3: VehicleFeed.Vehicle
 }
 var file_proto_schema_proto_depIdxs = []int32{
-	2, // 0: VehicleFeed.vehicles:type_name -> VehicleFeed.Vehicle
+	3, // 0: VehicleFeed.vehicles:type_name -> VehicleFeed.Vehicle
 	0, // 1: VehicleFeed.Vehicle.line:type_name -> VehicleFeed.Line
-	2, // [2:2] is the sub-list for method output_type
-	2, // [2:2] is the sub-list for method input_type
-	2, // [2:2] is the sub-list for extension type_name
-	2, // [2:2] is the sub-list for extension extendee
-	0, // [0:2] is the sub-list for field type_name
+	2, // 2: VehicleFeed.Vehicle.nearest_station:type_name -> VehicleFeed.Station
+	3, // [3:3] is the sub-list for method output_type
+	3, // [3:3] is the sub-list for method input_type
+	3, // [3:3] is the sub-list for extension type_name
+	3, // [3:3] is the sub-list for extension extendee
+	0, // [0:3] is the sub-list for field type_name
 }
 
 func init() { file_proto_schema_proto_init() }
@@ -260,7 +344,7 @@ func file_proto_schema_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_proto_schema_proto_rawDesc), len(file_proto_schema_proto_rawDesc)),
 			NumEnums:      1,
-			NumMessages:   2,
+			NumMessages:   3,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

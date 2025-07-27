@@ -1,9 +1,12 @@
 package main
 
 import (
+	"database/sql"
 	"encoding/csv"
+	"fmt"
 	"io"
 	"log"
+	"math"
 	"net/http"
 	"os"
 	"slices"
@@ -11,7 +14,61 @@ import (
 
 	pb "github.com/cjdenio/uta-trax-api/proto"
 	"google.golang.org/protobuf/proto"
+
+	_ "github.com/mattn/go-sqlite3"
 )
+
+var scheduleDb *sql.DB
+
+func distance(lat1 float64, lng1 float64, lat2 float64, lng2 float64) float64 {
+	radlat1 := float64(math.Pi * lat1 / 180)
+	radlat2 := float64(math.Pi * lat2 / 180)
+
+	theta := float64(lng1 - lng2)
+	radtheta := float64(math.Pi * theta / 180)
+
+	dist := math.Sin(radlat1)*math.Sin(radlat2) + math.Cos(radlat1)*math.Cos(radlat2)*math.Cos(radtheta)
+	if dist > 1 {
+		dist = 1
+	}
+
+	dist = math.Acos(dist)
+	dist = dist * 180 / math.Pi
+	dist = dist * 60 * 1.1515
+
+	return dist
+}
+
+func getStationForVehicle(vehicle *pb.VehiclePosition) *pb.VehicleFeed_Station {
+	rows, err := scheduleDb.Query(`SELECT stop_lat, stop_lon, stops.stop_id, stop_name FROM stop_times INNER JOIN stops ON stops.stop_id = stop_times.stop_id WHERE stop_times.trip_id = ? AND stop_times.pickup_type != 1 AND stop_times.drop_off_type != 1;`, vehicle.Trip.TripId)
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	nearestStop := new(pb.VehicleFeed_Station)
+	nearestStopDistance := math.Inf(1)
+
+	for rows.Next() {
+		var stop_lat float32
+		var stop_lon float32
+		var stop_id string
+		var stop_name string
+
+		rows.Scan(&stop_lat, &stop_lon, &stop_id, &stop_name)
+
+		distance := distance(float64(stop_lat), float64(stop_lon), float64(*vehicle.Position.Latitude), float64(*vehicle.Position.Longitude))
+		if distance < nearestStopDistance {
+			nearestStop.Id = stop_id
+			nearestStop.Name = stop_name
+			nearestStop.Lat = stop_lat
+			nearestStop.Lon = stop_lon
+
+			nearestStopDistance = distance
+		}
+	}
+
+	return nearestStop
+}
 
 func getVehicles() ([]*pb.VehiclePosition, error) {
 	resp, err := http.Get("https://apps.rideuta.com/tms/gtfs/Vehicle")
@@ -86,9 +143,9 @@ func loadTrips() error {
 			case "45389":
 				trip_info.Line = pb.VehicleFeed_STREETCAR
 				trips[record[trip_id]] = trip_info
-			case "41065":
-				trip_info.Line = pb.VehicleFeed_FRONTRUNNER
-				trips[record[trip_id]] = trip_info
+				// case "41065":
+				// 	trip_info.Line = pb.VehicleFeed_FRONTRUNNER
+				// 	trips[record[trip_id]] = trip_info
 			}
 		} else {
 			break
@@ -108,11 +165,12 @@ func feedifyVehicles(vehicles []*pb.VehiclePosition) pb.VehicleFeed {
 		}
 
 		vehicle_feed = append(vehicle_feed, &pb.VehicleFeed_Vehicle{
-			Lat:       *vehicle.Position.Latitude,
-			Lon:       *vehicle.Position.Longitude,
-			Line:      trip.Line,
-			Id:        *vehicle.Vehicle.Id,
-			Direction: trip.Direction,
+			Lat:            *vehicle.Position.Latitude,
+			Lon:            *vehicle.Position.Longitude,
+			Line:           trip.Line,
+			Id:             *vehicle.Vehicle.Id,
+			Direction:      trip.Direction,
+			NearestStation: getStationForVehicle(vehicle),
 		})
 	}
 
@@ -125,6 +183,22 @@ func main() {
 	if err := loadTrips(); err != nil {
 		log.Fatalln(err)
 	}
+
+	_db, err := sql.Open("sqlite3", "uta-gtfs.db")
+	if err != nil {
+		log.Fatal(err)
+	}
+	scheduleDb = _db
+
+	// vehicles, err := getVehicles()
+	// if err != nil {
+	// 	log.Fatalln(err)
+	// }
+
+	// for _, v := range vehicles {
+	// 	station := getStationForVehicle(v)
+	// 	fmt.Println(station)
+	// }
 
 	http.Handle("/", http.FileServer(http.Dir("./static")))
 
@@ -144,5 +218,12 @@ func main() {
 		w.Write(b)
 	})
 
-	http.ListenAndServe(":"+os.Getenv("PORT"), nil)
+	port := "3000"
+	if portEnv, ok := os.LookupEnv("PORT"); ok {
+		port = portEnv
+	}
+
+	fmt.Printf("Started on port %s\n", port)
+
+	http.ListenAndServe(":"+port, nil)
 }
