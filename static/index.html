@@ -50,11 +50,11 @@
           .decode(new Uint8Array(bin));
 
         vehicles.forEach((vehicle) => {
-          L.circle([vehicle.lat, vehicle.lon], {
+          L.circleMarker([vehicle.lat, vehicle.lon], {
             fillColor: COLORS[vehicle.line],
             color: COLORS[vehicle.line],
             fillOpacity: 0.5,
-            radius: 200,
+            radius: 8,
           })
             .addTo(map)
             .bindPopup(vehicle.nearestStation.name);
