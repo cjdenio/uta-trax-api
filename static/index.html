@@ -57,7 +57,9 @@
             radius: 8,
           })
             .addTo(map)
-            .bindPopup(vehicle.nearestStation.name);
+            .bindPopup(
+              `${vehicle.headsign}<br />@ ${vehicle.nearestStation.name}`
+            );
         });
       });
     </script>

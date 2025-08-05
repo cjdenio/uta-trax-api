@@ -25,6 +25,7 @@ message VehicleFeed {
     int32 direction = 4;
     string id = 5;
     Station nearest_station = 6;
+    string headsign = 7;
   }
 
   repeated Vehicle vehicles = 1;

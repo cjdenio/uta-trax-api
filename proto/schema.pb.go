@@ -199,6 +199,7 @@ type VehicleFeed_Vehicle struct {
 	Direction      int32                  `protobuf:"varint,4,opt,name=direction,proto3" json:"direction,omitempty"`
 	Id             string                 `protobuf:"bytes,5,opt,name=id,proto3" json:"id,omitempty"`
 	NearestStation *VehicleFeed_Station   `protobuf:"bytes,6,opt,name=nearest_station,json=nearestStation,proto3" json:"nearest_station,omitempty"`
+	Headsign       string                 `protobuf:"bytes,7,opt,name=headsign,proto3" json:"headsign,omitempty"`
 	unknownFields  protoimpl.UnknownFields
 	sizeCache      protoimpl.SizeCache
 }
@@ -275,25 +276,33 @@ func (x *VehicleFeed_Vehicle) GetNearestStation() *VehicleFeed_Station {
 	return nil
 }
 
+func (x *VehicleFeed_Vehicle) GetHeadsign() string {
+	if x != nil {
+		return x.Headsign
+	}
+	return ""
+}
+
 var File_proto_schema_proto protoreflect.FileDescriptor
 
 const file_proto_schema_proto_rawDesc = "" +
 	"\n" +
-	"\x12proto/schema.proto\"\xb2\x03\n" +
+	"\x12proto/schema.proto\"\xce\x03\n" +
 	"\vVehicleFeed\x120\n" +
 	"\bvehicles\x18\x01 \x03(\v2\x14.VehicleFeed.VehicleR\bvehicles\x1aQ\n" +
 	"\aStation\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12\x10\n" +
 	"\x03lat\x18\x03 \x01(\x02R\x03lat\x12\x10\n" +
-	"\x03lon\x18\x04 \x01(\x02R\x03lon\x1a\xc1\x01\n" +
+	"\x03lon\x18\x04 \x01(\x02R\x03lon\x1a\xdd\x01\n" +
 	"\aVehicle\x12\x10\n" +
 	"\x03lat\x18\x01 \x01(\x02R\x03lat\x12\x10\n" +
 	"\x03lon\x18\x02 \x01(\x02R\x03lon\x12%\n" +
 	"\x04line\x18\x03 \x01(\x0e2\x11.VehicleFeed.LineR\x04line\x12\x1c\n" +
 	"\tdirection\x18\x04 \x01(\x05R\tdirection\x12\x0e\n" +
 	"\x02id\x18\x05 \x01(\tR\x02id\x12=\n" +
-	"\x0fnearest_station\x18\x06 \x01(\v2\x14.VehicleFeed.StationR\x0enearestStation\"Z\n" +
+	"\x0fnearest_station\x18\x06 \x01(\v2\x14.VehicleFeed.StationR\x0enearestStation\x12\x1a\n" +
+	"\bheadsign\x18\a \x01(\tR\bheadsign\"Z\n" +
 	"\x04Line\x12\x14\n" +
 	"\x10LINE_UNSPECIFIED\x10\x00\x12\t\n" +
 	"\x05GREEN\x10\x01\x12\a\n" +

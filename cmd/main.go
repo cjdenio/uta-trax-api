@@ -100,6 +100,7 @@ func getVehicles() ([]*pb.VehiclePosition, error) {
 type TripInfo struct {
 	Line      pb.VehicleFeed_Line
 	Direction int32
+	Headsign  string
 }
 
 var trips = make(map[string]*TripInfo)
@@ -120,10 +121,12 @@ func loadTrips() error {
 	route_id := slices.Index(header, "route_id")
 	trip_id := slices.Index(header, "trip_id")
 	direction_id := slices.Index(header, "direction_id")
+	trip_headsign := slices.Index(header, "trip_headsign")
 
 	for {
 		if record, err := r.Read(); err == nil {
 			trip_info := new(TripInfo)
+			trip_info.Headsign = record[trip_headsign]
 
 			direction, err := strconv.ParseInt(record[direction_id], 10, 32)
 			if err == nil {
@@ -171,6 +174,7 @@ func feedifyVehicles(vehicles []*pb.VehiclePosition) pb.VehicleFeed {
 			Id:             *vehicle.Vehicle.Id,
 			Direction:      trip.Direction,
 			NearestStation: getStationForVehicle(vehicle),
+			Headsign:       trip.Headsign,
 		})
 	}
 
