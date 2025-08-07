@@ -43,6 +43,7 @@ func getStationForVehicle(vehicle *pb.VehiclePosition) *pb.VehicleFeed_Station {
 	rows, err := scheduleDb.Query(`SELECT stop_lat, stop_lon, stops.stop_id, stop_name FROM stop_times INNER JOIN stops ON stops.stop_id = stop_times.stop_id WHERE stop_times.trip_id = ? AND stop_times.pickup_type != 1 AND stop_times.drop_off_type != 1;`, vehicle.Trip.TripId)
 	if err != nil {
 		fmt.Println(err)
+		return nil
 	}
 
 	nearestStop := new(pb.VehicleFeed_Station)
@@ -65,6 +66,11 @@ func getStationForVehicle(vehicle *pb.VehiclePosition) *pb.VehicleFeed_Station {
 
 			nearestStopDistance = distance
 		}
+	}
+
+	// sometimes trains aren't where they should be, ignore nearest stop if more than 2 miles away
+	if nearestStopDistance > 2 {
+		return nil
 	}
 
 	return nearestStop
@@ -213,11 +219,18 @@ func main() {
 	http.HandleFunc("/api", func(w http.ResponseWriter, r *http.Request) {
 		vehicles, err := getVehicles()
 		if err != nil {
-			log.Fatalln(err)
+			log.Println(err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
 		}
 
 		feed := feedifyVehicles(vehicles)
-		b, _ := proto.Marshal(&feed)
+		b, err := proto.Marshal(&feed)
+		if err != nil {
+			log.Println(err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
 		w.Header().Add("Content-Type", "application/protobuf")
 		w.Write(b)
 	})
