@@ -2,15 +2,12 @@ package main
 
 import (
 	"database/sql"
-	"encoding/csv"
 	"fmt"
 	"io"
 	"log"
 	"math"
 	"net/http"
 	"os"
-	"slices"
-	"strconv"
 
 	pb "github.com/cjdenio/uta-trax-api/proto"
 	"google.golang.org/protobuf/proto"
@@ -93,6 +90,8 @@ func getVehicles() ([]*pb.VehiclePosition, error) {
 		return nil, err
 	}
 
+	log.Printf("Found %d vehicles...", len(feed.Entity))
+
 	vehicles := make([]*pb.VehiclePosition, 0, len(feed.Entity))
 	for _, v := range feed.Entity {
 		if v.Vehicle != nil {
@@ -112,46 +111,42 @@ type TripInfo struct {
 var trips = make(map[string]*TripInfo)
 
 func loadTrips() error {
-	f, err := os.Open("gtfs/trips.txt")
+	rows, err := scheduleDb.Query("SELECT route_id, trip_id, trip_headsign, direction_id FROM trips;")
 	if err != nil {
 		return err
 	}
-
-	r := csv.NewReader(f)
-
-	header, err := r.Read()
-	if err != nil {
-		return err
-	}
-
-	route_id := slices.Index(header, "route_id")
-	trip_id := slices.Index(header, "trip_id")
-	direction_id := slices.Index(header, "direction_id")
-	trip_headsign := slices.Index(header, "trip_headsign")
 
 	for {
-		if record, err := r.Read(); err == nil {
+		if next := rows.Next(); next {
 			trip_info := new(TripInfo)
-			trip_info.Headsign = record[trip_headsign]
 
-			direction, err := strconv.ParseInt(record[direction_id], 10, 32)
-			if err == nil {
-				trip_info.Direction = int32(direction)
+			var route_id string
+			var trip_id string
+			var trip_headsign string
+			var direction_id int32
+
+			err = rows.Scan(&route_id, &trip_id, &trip_headsign, &direction_id)
+			if err != nil {
+				continue
 			}
 
-			switch record[route_id] {
+			trip_info.Headsign = trip_headsign
+
+			trip_info.Direction = direction_id
+
+			switch route_id {
 			case "8246":
 				trip_info.Line = pb.VehicleFeed_RED
-				trips[record[trip_id]] = trip_info
+				trips[trip_id] = trip_info
 			case "39020":
 				trip_info.Line = pb.VehicleFeed_GREEN
-				trips[record[trip_id]] = trip_info
+				trips[trip_id] = trip_info
 			case "5907":
 				trip_info.Line = pb.VehicleFeed_BLUE
-				trips[record[trip_id]] = trip_info
+				trips[trip_id] = trip_info
 			case "45389":
 				trip_info.Line = pb.VehicleFeed_STREETCAR
-				trips[record[trip_id]] = trip_info
+				trips[trip_id] = trip_info
 				// case "41065":
 				// 	trip_info.Line = pb.VehicleFeed_FRONTRUNNER
 				// 	trips[record[trip_id]] = trip_info
@@ -170,6 +165,7 @@ func feedifyVehicles(vehicles []*pb.VehiclePosition) pb.VehicleFeed {
 	for _, vehicle := range vehicles {
 		trip, ok := trips[*vehicle.Trip.TripId]
 		if !ok {
+			log.Printf("No matching trip '%s', skipping...", *vehicle.Trip.TripId)
 			continue
 		}
 
@@ -190,15 +186,15 @@ func feedifyVehicles(vehicles []*pb.VehiclePosition) pb.VehicleFeed {
 }
 
 func main() {
-	if err := loadTrips(); err != nil {
-		log.Fatalln(err)
-	}
-
 	_db, err := sql.Open("sqlite3", "uta-gtfs.db")
 	if err != nil {
 		log.Fatal(err)
 	}
+
 	scheduleDb = _db
+	if err := loadTrips(); err != nil {
+		log.Fatalln(err)
+	}
 
 	// vehicles, err := getVehicles()
 	// if err != nil {
