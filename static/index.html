@@ -53,7 +53,7 @@
       }
 
       protobuf.load("/schema.proto").then((root) => {
-        setInterval(async () => {
+        async function reload() {
           const bin = await fetch("/api").then((r) => r.arrayBuffer());
           const { vehicles } = root
             .lookupType("VehicleFeed")
@@ -75,7 +75,11 @@
                 )
             );
           });
-        }, 5000);
+        }
+
+        reload();
+
+        setInterval(reload, 5000);
       });
     </script>
   </body>
