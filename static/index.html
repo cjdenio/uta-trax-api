@@ -35,6 +35,7 @@
         4: "#77777a",
         5: "#c227b9",
       };
+      let markers = []
 
       var map = L.map("map").setView([40.656734, -111.890818], 12);
       L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
@@ -43,24 +44,38 @@
           '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>',
       }).addTo(map);
 
-      protobuf.load("/schema.proto").then(async (root) => {
-        const bin = await fetch("/api").then((r) => r.arrayBuffer());
-        const { vehicles } = root
-          .lookupType("VehicleFeed")
-          .decode(new Uint8Array(bin));
+      function clearMap() {
+        for (const marker of markers) {
+          marker.remove();
+        }
 
-        vehicles.forEach((vehicle) => {
-          L.circleMarker([vehicle.lat, vehicle.lon], {
-            fillColor: COLORS[vehicle.line],
-            color: COLORS[vehicle.line],
-            fillOpacity: 0.5,
-            radius: 8,
-          })
-            .addTo(map)
-            .bindPopup(
-              `${vehicle.headsign}<br />@ ${vehicle.nearestStation.name}`
+        markers = [];
+      }
+
+      protobuf.load("/schema.proto").then((root) => {
+        setInterval(async () => {
+          const bin = await fetch("/api").then((r) => r.arrayBuffer());
+          const { vehicles } = root
+            .lookupType("VehicleFeed")
+            .decode(new Uint8Array(bin));
+
+          clearMap();
+
+          vehicles.forEach((vehicle) => {
+            markers.push(
+              L.circleMarker([vehicle.lat, vehicle.lon], {
+                fillColor: COLORS[vehicle.line],
+                color: COLORS[vehicle.line],
+                fillOpacity: 0.5,
+                radius: 8,
+              })
+                .addTo(map)
+                .bindPopup(
+                  `${vehicle.headsign}<br />@ ${vehicle.nearestStation.name}`
+                )
             );
-        });
+          });
+        }, 5000);
       });
     </script>
   </body>

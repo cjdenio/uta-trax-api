@@ -186,10 +186,14 @@ func feedifyVehicles(vehicles []*pb.VehiclePosition) pb.VehicleFeed {
 }
 
 func main() {
+	fmt.Println("Opening database...")
+
 	_db, err := sql.Open("sqlite3", "uta-gtfs.db")
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	fmt.Println("Loading trip data...")
 
 	scheduleDb = _db
 	if err := loadTrips(); err != nil {
