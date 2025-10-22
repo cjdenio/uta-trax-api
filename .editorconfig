@@ -1,0 +1,11 @@
+[*.go]
+indent_style = tab
+[Makefile]
+indent_style = tab
+
+[*.html]
+indent_style = space
+indent_size = 2
+[*.proto]
+indent_style = space
+indent_size = 2
