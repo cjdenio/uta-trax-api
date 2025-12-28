@@ -73,21 +73,21 @@ func getStationForVehicle(vehicle *pb.VehiclePosition) *pb.VehicleFeed_Station {
 	return nearestStop
 }
 
-func getVehicles() ([]*pb.VehiclePosition, error) {
+func getVehicles() ([]*pb.VehiclePosition, *pb.FeedHeader, error) {
 	resp, err := http.Get("https://apps.rideuta.com/tms/gtfs/Vehicle")
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	bytes, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	feed := pb.FeedMessage{}
 	err = proto.Unmarshal(bytes, &feed)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	log.Printf("Found %d vehicles...", len(feed.Entity))
@@ -99,7 +99,7 @@ func getVehicles() ([]*pb.VehiclePosition, error) {
 		}
 	}
 
-	return vehicles, nil
+	return vehicles, feed.Header, nil
 }
 
 type TripInfo struct {
@@ -108,80 +108,72 @@ type TripInfo struct {
 	Headsign  string
 }
 
-var trips = make(map[string]*TripInfo)
-
-func loadTrips() error {
-	rows, err := scheduleDb.Query("SELECT route_id, trip_id, trip_headsign, direction_id FROM trips;")
-	if err != nil {
-		return err
-	}
-
-	for {
-		if next := rows.Next(); next {
-			trip_info := new(TripInfo)
-
-			var route_id string
-			var trip_id string
-			var trip_headsign string
-			var direction_id int32
-
-			err = rows.Scan(&route_id, &trip_id, &trip_headsign, &direction_id)
-			if err != nil {
-				continue
-			}
-
-			trip_info.Headsign = trip_headsign
-
-			trip_info.Direction = direction_id
-
-			switch route_id {
-			case "8246":
-				trip_info.Line = pb.VehicleFeed_RED
-				trips[trip_id] = trip_info
-			case "39020":
-				trip_info.Line = pb.VehicleFeed_GREEN
-				trips[trip_id] = trip_info
-			case "5907":
-				trip_info.Line = pb.VehicleFeed_BLUE
-				trips[trip_id] = trip_info
-			case "45389":
-				trip_info.Line = pb.VehicleFeed_STREETCAR
-				trips[trip_id] = trip_info
-				// case "41065":
-				// 	trip_info.Line = pb.VehicleFeed_FRONTRUNNER
-				// 	trips[record[trip_id]] = trip_info
-			}
-		} else {
-			break
-		}
-	}
-
-	return nil
-}
-
-func feedifyVehicles(vehicles []*pb.VehiclePosition) pb.VehicleFeed {
+func feedifyVehicles(vehicles []*pb.VehiclePosition, header *pb.FeedHeader) pb.VehicleFeed {
 	vehicle_feed := make([]*pb.VehicleFeed_Vehicle, 0, len(vehicles))
 
 	for _, vehicle := range vehicles {
-		trip, ok := trips[*vehicle.Trip.TripId]
-		if !ok {
-			log.Printf("No matching trip '%s', skipping...", *vehicle.Trip.TripId)
+		rows, err := scheduleDb.Query(`
+			SELECT
+				trips.route_id,
+				trips.trip_headsign,
+				routes.route_type,
+				routes.route_color,
+				routes.route_short_name,
+				routes.route_long_name
+			FROM trips
+			INNER JOIN routes ON routes.route_id = trips.route_id
+			WHERE trips.trip_id = ?
+			LIMIT 1;
+		`, *vehicle.Trip.TripId)
+		if err != nil {
+			fmt.Println(err)
 			continue
 		}
 
+		var route_id string
+		var trip_headsign sql.NullString
+		var route_type int32
+		var route_color sql.NullString
+		var route_short_name sql.NullString
+		var route_long_name sql.NullString
+
+		if !rows.Next() {
+			fmt.Println(rows.Err())
+			continue
+		}
+
+		err = rows.Scan(&route_id, &trip_headsign, &route_type, &route_color, &route_short_name, &route_long_name)
+		if err != nil {
+			fmt.Println(err)
+			continue
+		}
+
+		rows.Close()
+
 		vehicle_feed = append(vehicle_feed, &pb.VehicleFeed_Vehicle{
-			Lat:            *vehicle.Position.Latitude,
-			Lon:            *vehicle.Position.Longitude,
-			Line:           trip.Line,
-			Id:             *vehicle.Vehicle.Id,
-			Direction:      trip.Direction,
+			Lat:     *vehicle.Position.Latitude,
+			Lon:     *vehicle.Position.Longitude,
+			Bearing: *vehicle.Position.Bearing,
+			// Line:           trip.Line,
+			Id: *vehicle.Vehicle.Id,
+			// Direction:      trip.Direction,
 			NearestStation: getStationForVehicle(vehicle),
-			Headsign:       trip.Headsign,
+			Headsign:       trip_headsign.String,
+			Route: &pb.VehicleFeed_Route{
+				Id:        route_id,
+				Type:      pb.VehicleFeed_Route_RouteType(route_type + 1), // lol
+				Color:     route_color.String,
+				ShortName: route_short_name.String,
+				LongName:  route_long_name.String,
+			},
 		})
 	}
 
 	return pb.VehicleFeed{
 		Vehicles: vehicle_feed,
+		Info: &pb.VehicleFeed_FeedInfo{
+			LastUpdate: *header.Timestamp,
+		},
 	}
 }
 
@@ -193,12 +185,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	fmt.Println("Loading trip data...")
-
 	scheduleDb = _db
-	if err := loadTrips(); err != nil {
-		log.Fatalln(err)
-	}
 
 	// vehicles, err := getVehicles()
 	// if err != nil {
@@ -217,14 +204,14 @@ func main() {
 	})
 
 	http.HandleFunc("/api", func(w http.ResponseWriter, r *http.Request) {
-		vehicles, err := getVehicles()
+		vehicles, header, err := getVehicles()
 		if err != nil {
 			log.Println(err)
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
 
-		feed := feedifyVehicles(vehicles)
+		feed := feedifyVehicles(vehicles, header)
 		b, err := proto.Marshal(&feed)
 		if err != nil {
 			log.Println(err)

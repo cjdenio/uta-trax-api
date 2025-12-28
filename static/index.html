@@ -1,3 +1,5 @@
+<!-- i SWEAR i write good code sometimes -->
+
 <!DOCTYPE html>
 
 <html>
@@ -14,73 +16,108 @@
       body {
         margin: 0;
       }
+
+      #sidebar {
+        flex-basis: 300px;
+        flex-shrink: 0;
+        padding: 10px;
+      }
+
+      .vehicle {
+        border-radius: 999px;
+        width: 20px;
+        height: 20px;
+        margin-left: -10px;
+        margin-top: -10px;
+        padding: 8px;
+        fill: white;
+        /* box-shadow: 0px 0px 10px black; */
+        border: 1px solid black;
+        position: relative;
+        background-color: var(--color);
+      }
+
+      .vehicle-plain {
+        /* bus */
+        background-color: white;
+        border-color: var(--color);
+        fill: var(--color);
+      }
+      .vehicle-small {
+        width: 15px;
+        height: 15px;
+        margin-left: -7px;
+        margin-top: -7px;
+      }
     </style>
   </head>
 
   <body>
-    <div id="map" style="height: 100vh"></div>
+    <div style="display: flex">
+      <div id="map" style="height: 100vh; flex-grow: 1"></div>
+      <div id="sidebar">
+        <h1>Every Transit Vehicle in Salt Lake City*</h1>
+        <small>*with a tracker</small>
 
-    <script src="//cdn.jsdelivr.net/npm/protobufjs@7.X.X/dist/protobuf.min.js"></script>
-    <script
-      src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
-      integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
-      crossorigin=""
-    ></script>
+        <hr />
 
-    <script>
-      const COLORS = {
-        1: "#2eb566",
-        2: "#be2036",
-        3: "#004a97",
-        4: "#77777a",
-        5: "#c227b9",
-      };
-      let markers = []
+        <div>
+          <label for="bus">
+            Regular Bus
+            <input
+              type="checkbox"
+              name="bus"
+              id="bus"
+              checked
+              class="layer-toggle"
+            />
+          </label>
+        </div>
+        <div>
+          <label for="brt">
+            BRT
+            <input
+              type="checkbox"
+              name="brt"
+              id="brt"
+              checked
+              class="layer-toggle"
+            />
+          </label>
+        </div>
+        <div>
+          <label for="trax">
+            TRAX + S-Line (light rail)
+            <input
+              type="checkbox"
+              name="trax"
+              id="trax"
+              checked
+              class="layer-toggle"
+            />
+          </label>
+        </div>
+        <div>
+          <label for="frontrunner">
+            FrontRunner (commuter rail)
+            <input
+              type="checkbox"
+              name="frontrunner"
+              id="frontrunner"
+              checked
+              class="layer-toggle"
+            />
+          </label>
+        </div>
 
-      var map = L.map("map").setView([40.656734, -111.890818], 12);
-      L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
-        maxZoom: 19,
-        attribution:
-          '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-      }).addTo(map);
+        <hr>
 
-      function clearMap() {
-        for (const marker of markers) {
-          marker.remove();
-        }
+        <div>
+          last updated: <span id="last-updated">-</span>
+        </div>
+      </div>
+    </div>
 
-        markers = [];
-      }
-
-      protobuf.load("/schema.proto").then((root) => {
-        async function reload() {
-          const bin = await fetch("/api").then((r) => r.arrayBuffer());
-          const { vehicles } = root
-            .lookupType("VehicleFeed")
-            .decode(new Uint8Array(bin));
-
-          clearMap();
-
-          vehicles.forEach((vehicle) => {
-            markers.push(
-              L.circleMarker([vehicle.lat, vehicle.lon], {
-                fillColor: COLORS[vehicle.line],
-                color: COLORS[vehicle.line],
-                fillOpacity: 0.5,
-                radius: 8,
-              })
-                .addTo(map)
-                .bindPopup(
-                  `${vehicle.headsign}<br />@ ${vehicle.nearestStation.name}`
-                )
-            );
-          });
-        }
-
-        reload();
-
-        setInterval(reload, 5000);
-      });
-    </script>
+    <script type="module" src="/js/main.js"></script>
   </body>
 </html>

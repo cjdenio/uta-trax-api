@@ -11,6 +11,26 @@ message VehicleFeed {
     FRONTRUNNER = 5;
   }
 
+  message FeedInfo {
+    uint64 last_update = 1;
+  }
+
+  message Route {
+    enum RouteType {
+      UNSPECIFIED = 0;
+      TRAM = 1;
+      SUBWAY = 2;
+      RAIL = 3;
+      BUS = 4;
+    }
+
+    RouteType type = 1;
+    string id = 2;
+    string color = 3;
+    string short_name = 4;
+    string long_name = 5;
+  }
+
   message Station {
     string id = 1;
     string name = 2;
@@ -21,12 +41,15 @@ message VehicleFeed {
   message Vehicle {
     float lat = 1;
     float lon = 2;
+    float bearing = 9;
     Line line = 3;
     int32 direction = 4;
     string id = 5;
     Station nearest_station = 6;
     string headsign = 7;
+    Route route = 8;
   }
 
   repeated Vehicle vehicles = 1;
+  FeedInfo info = 2;
 }

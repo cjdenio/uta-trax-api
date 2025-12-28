@@ -79,9 +79,65 @@ func (VehicleFeed_Line) EnumDescriptor() ([]byte, []int) {
 	return file_proto_schema_proto_rawDescGZIP(), []int{0, 0}
 }
 
+type VehicleFeed_Route_RouteType int32
+
+const (
+	VehicleFeed_Route_UNSPECIFIED VehicleFeed_Route_RouteType = 0
+	VehicleFeed_Route_TRAM        VehicleFeed_Route_RouteType = 1
+	VehicleFeed_Route_SUBWAY      VehicleFeed_Route_RouteType = 2
+	VehicleFeed_Route_RAIL        VehicleFeed_Route_RouteType = 3
+	VehicleFeed_Route_BUS         VehicleFeed_Route_RouteType = 4
+)
+
+// Enum value maps for VehicleFeed_Route_RouteType.
+var (
+	VehicleFeed_Route_RouteType_name = map[int32]string{
+		0: "UNSPECIFIED",
+		1: "TRAM",
+		2: "SUBWAY",
+		3: "RAIL",
+		4: "BUS",
+	}
+	VehicleFeed_Route_RouteType_value = map[string]int32{
+		"UNSPECIFIED": 0,
+		"TRAM":        1,
+		"SUBWAY":      2,
+		"RAIL":        3,
+		"BUS":         4,
+	}
+)
+
+func (x VehicleFeed_Route_RouteType) Enum() *VehicleFeed_Route_RouteType {
+	p := new(VehicleFeed_Route_RouteType)
+	*p = x
+	return p
+}
+
+func (x VehicleFeed_Route_RouteType) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (VehicleFeed_Route_RouteType) Descriptor() protoreflect.EnumDescriptor {
+	return file_proto_schema_proto_enumTypes[1].Descriptor()
+}
+
+func (VehicleFeed_Route_RouteType) Type() protoreflect.EnumType {
+	return &file_proto_schema_proto_enumTypes[1]
+}
+
+func (x VehicleFeed_Route_RouteType) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use VehicleFeed_Route_RouteType.Descriptor instead.
+func (VehicleFeed_Route_RouteType) EnumDescriptor() ([]byte, []int) {
+	return file_proto_schema_proto_rawDescGZIP(), []int{0, 1, 0}
+}
+
 type VehicleFeed struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Vehicles      []*VehicleFeed_Vehicle `protobuf:"bytes,1,rep,name=vehicles,proto3" json:"vehicles,omitempty"`
+	Info          *VehicleFeed_FeedInfo  `protobuf:"bytes,2,opt,name=info,proto3" json:"info,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -123,6 +179,133 @@ func (x *VehicleFeed) GetVehicles() []*VehicleFeed_Vehicle {
 	return nil
 }
 
+func (x *VehicleFeed) GetInfo() *VehicleFeed_FeedInfo {
+	if x != nil {
+		return x.Info
+	}
+	return nil
+}
+
+type VehicleFeed_FeedInfo struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	LastUpdate    uint64                 `protobuf:"varint,1,opt,name=last_update,json=lastUpdate,proto3" json:"last_update,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *VehicleFeed_FeedInfo) Reset() {
+	*x = VehicleFeed_FeedInfo{}
+	mi := &file_proto_schema_proto_msgTypes[1]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *VehicleFeed_FeedInfo) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*VehicleFeed_FeedInfo) ProtoMessage() {}
+
+func (x *VehicleFeed_FeedInfo) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_schema_proto_msgTypes[1]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use VehicleFeed_FeedInfo.ProtoReflect.Descriptor instead.
+func (*VehicleFeed_FeedInfo) Descriptor() ([]byte, []int) {
+	return file_proto_schema_proto_rawDescGZIP(), []int{0, 0}
+}
+
+func (x *VehicleFeed_FeedInfo) GetLastUpdate() uint64 {
+	if x != nil {
+		return x.LastUpdate
+	}
+	return 0
+}
+
+type VehicleFeed_Route struct {
+	state         protoimpl.MessageState      `protogen:"open.v1"`
+	Type          VehicleFeed_Route_RouteType `protobuf:"varint,1,opt,name=type,proto3,enum=VehicleFeed_Route_RouteType" json:"type,omitempty"`
+	Id            string                      `protobuf:"bytes,2,opt,name=id,proto3" json:"id,omitempty"`
+	Color         string                      `protobuf:"bytes,3,opt,name=color,proto3" json:"color,omitempty"`
+	ShortName     string                      `protobuf:"bytes,4,opt,name=short_name,json=shortName,proto3" json:"short_name,omitempty"`
+	LongName      string                      `protobuf:"bytes,5,opt,name=long_name,json=longName,proto3" json:"long_name,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *VehicleFeed_Route) Reset() {
+	*x = VehicleFeed_Route{}
+	mi := &file_proto_schema_proto_msgTypes[2]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *VehicleFeed_Route) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*VehicleFeed_Route) ProtoMessage() {}
+
+func (x *VehicleFeed_Route) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_schema_proto_msgTypes[2]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use VehicleFeed_Route.ProtoReflect.Descriptor instead.
+func (*VehicleFeed_Route) Descriptor() ([]byte, []int) {
+	return file_proto_schema_proto_rawDescGZIP(), []int{0, 1}
+}
+
+func (x *VehicleFeed_Route) GetType() VehicleFeed_Route_RouteType {
+	if x != nil {
+		return x.Type
+	}
+	return VehicleFeed_Route_UNSPECIFIED
+}
+
+func (x *VehicleFeed_Route) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+func (x *VehicleFeed_Route) GetColor() string {
+	if x != nil {
+		return x.Color
+	}
+	return ""
+}
+
+func (x *VehicleFeed_Route) GetShortName() string {
+	if x != nil {
+		return x.ShortName
+	}
+	return ""
+}
+
+func (x *VehicleFeed_Route) GetLongName() string {
+	if x != nil {
+		return x.LongName
+	}
+	return ""
+}
+
 type VehicleFeed_Station struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
@@ -135,7 +318,7 @@ type VehicleFeed_Station struct {
 
 func (x *VehicleFeed_Station) Reset() {
 	*x = VehicleFeed_Station{}
-	mi := &file_proto_schema_proto_msgTypes[1]
+	mi := &file_proto_schema_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -147,7 +330,7 @@ func (x *VehicleFeed_Station) String() string {
 func (*VehicleFeed_Station) ProtoMessage() {}
 
 func (x *VehicleFeed_Station) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_schema_proto_msgTypes[1]
+	mi := &file_proto_schema_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -160,7 +343,7 @@ func (x *VehicleFeed_Station) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use VehicleFeed_Station.ProtoReflect.Descriptor instead.
 func (*VehicleFeed_Station) Descriptor() ([]byte, []int) {
-	return file_proto_schema_proto_rawDescGZIP(), []int{0, 0}
+	return file_proto_schema_proto_rawDescGZIP(), []int{0, 2}
 }
 
 func (x *VehicleFeed_Station) GetId() string {
@@ -195,18 +378,20 @@ type VehicleFeed_Vehicle struct {
 	state          protoimpl.MessageState `protogen:"open.v1"`
 	Lat            float32                `protobuf:"fixed32,1,opt,name=lat,proto3" json:"lat,omitempty"`
 	Lon            float32                `protobuf:"fixed32,2,opt,name=lon,proto3" json:"lon,omitempty"`
+	Bearing        float32                `protobuf:"fixed32,9,opt,name=bearing,proto3" json:"bearing,omitempty"`
 	Line           VehicleFeed_Line       `protobuf:"varint,3,opt,name=line,proto3,enum=VehicleFeed_Line" json:"line,omitempty"`
 	Direction      int32                  `protobuf:"varint,4,opt,name=direction,proto3" json:"direction,omitempty"`
 	Id             string                 `protobuf:"bytes,5,opt,name=id,proto3" json:"id,omitempty"`
 	NearestStation *VehicleFeed_Station   `protobuf:"bytes,6,opt,name=nearest_station,json=nearestStation,proto3" json:"nearest_station,omitempty"`
 	Headsign       string                 `protobuf:"bytes,7,opt,name=headsign,proto3" json:"headsign,omitempty"`
+	Route          *VehicleFeed_Route     `protobuf:"bytes,8,opt,name=route,proto3" json:"route,omitempty"`
 	unknownFields  protoimpl.UnknownFields
 	sizeCache      protoimpl.SizeCache
 }
 
 func (x *VehicleFeed_Vehicle) Reset() {
 	*x = VehicleFeed_Vehicle{}
-	mi := &file_proto_schema_proto_msgTypes[2]
+	mi := &file_proto_schema_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -218,7 +403,7 @@ func (x *VehicleFeed_Vehicle) String() string {
 func (*VehicleFeed_Vehicle) ProtoMessage() {}
 
 func (x *VehicleFeed_Vehicle) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_schema_proto_msgTypes[2]
+	mi := &file_proto_schema_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -231,7 +416,7 @@ func (x *VehicleFeed_Vehicle) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use VehicleFeed_Vehicle.ProtoReflect.Descriptor instead.
 func (*VehicleFeed_Vehicle) Descriptor() ([]byte, []int) {
-	return file_proto_schema_proto_rawDescGZIP(), []int{0, 1}
+	return file_proto_schema_proto_rawDescGZIP(), []int{0, 3}
 }
 
 func (x *VehicleFeed_Vehicle) GetLat() float32 {
@@ -244,6 +429,13 @@ func (x *VehicleFeed_Vehicle) GetLat() float32 {
 func (x *VehicleFeed_Vehicle) GetLon() float32 {
 	if x != nil {
 		return x.Lon
+	}
+	return 0
+}
+
+func (x *VehicleFeed_Vehicle) GetBearing() float32 {
+	if x != nil {
+		return x.Bearing
 	}
 	return 0
 }
@@ -283,26 +475,53 @@ func (x *VehicleFeed_Vehicle) GetHeadsign() string {
 	return ""
 }
 
+func (x *VehicleFeed_Vehicle) GetRoute() *VehicleFeed_Route {
+	if x != nil {
+		return x.Route
+	}
+	return nil
+}
+
 var File_proto_schema_proto protoreflect.FileDescriptor
 
 const file_proto_schema_proto_rawDesc = "" +
 	"\n" +
-	"\x12proto/schema.proto\"\xce\x03\n" +
+	"\x12proto/schema.proto\"\xcf\x06\n" +
 	"\vVehicleFeed\x120\n" +
-	"\bvehicles\x18\x01 \x03(\v2\x14.VehicleFeed.VehicleR\bvehicles\x1aQ\n" +
+	"\bvehicles\x18\x01 \x03(\v2\x14.VehicleFeed.VehicleR\bvehicles\x12)\n" +
+	"\x04info\x18\x02 \x01(\v2\x15.VehicleFeed.FeedInfoR\x04info\x1a+\n" +
+	"\bFeedInfo\x12\x1f\n" +
+	"\vlast_update\x18\x01 \x01(\x04R\n" +
+	"lastUpdate\x1a\xe2\x01\n" +
+	"\x05Route\x120\n" +
+	"\x04type\x18\x01 \x01(\x0e2\x1c.VehicleFeed.Route.RouteTypeR\x04type\x12\x0e\n" +
+	"\x02id\x18\x02 \x01(\tR\x02id\x12\x14\n" +
+	"\x05color\x18\x03 \x01(\tR\x05color\x12\x1d\n" +
+	"\n" +
+	"short_name\x18\x04 \x01(\tR\tshortName\x12\x1b\n" +
+	"\tlong_name\x18\x05 \x01(\tR\blongName\"E\n" +
+	"\tRouteType\x12\x0f\n" +
+	"\vUNSPECIFIED\x10\x00\x12\b\n" +
+	"\x04TRAM\x10\x01\x12\n" +
+	"\n" +
+	"\x06SUBWAY\x10\x02\x12\b\n" +
+	"\x04RAIL\x10\x03\x12\a\n" +
+	"\x03BUS\x10\x04\x1aQ\n" +
 	"\aStation\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12\x10\n" +
 	"\x03lat\x18\x03 \x01(\x02R\x03lat\x12\x10\n" +
-	"\x03lon\x18\x04 \x01(\x02R\x03lon\x1a\xdd\x01\n" +
+	"\x03lon\x18\x04 \x01(\x02R\x03lon\x1a\xa1\x02\n" +
 	"\aVehicle\x12\x10\n" +
 	"\x03lat\x18\x01 \x01(\x02R\x03lat\x12\x10\n" +
-	"\x03lon\x18\x02 \x01(\x02R\x03lon\x12%\n" +
+	"\x03lon\x18\x02 \x01(\x02R\x03lon\x12\x18\n" +
+	"\abearing\x18\t \x01(\x02R\abearing\x12%\n" +
 	"\x04line\x18\x03 \x01(\x0e2\x11.VehicleFeed.LineR\x04line\x12\x1c\n" +
 	"\tdirection\x18\x04 \x01(\x05R\tdirection\x12\x0e\n" +
 	"\x02id\x18\x05 \x01(\tR\x02id\x12=\n" +
 	"\x0fnearest_station\x18\x06 \x01(\v2\x14.VehicleFeed.StationR\x0enearestStation\x12\x1a\n" +
-	"\bheadsign\x18\a \x01(\tR\bheadsign\"Z\n" +
+	"\bheadsign\x18\a \x01(\tR\bheadsign\x12(\n" +
+	"\x05route\x18\b \x01(\v2\x12.VehicleFeed.RouteR\x05route\"Z\n" +
 	"\x04Line\x12\x14\n" +
 	"\x10LINE_UNSPECIFIED\x10\x00\x12\t\n" +
 	"\x05GREEN\x10\x01\x12\a\n" +
@@ -323,23 +542,29 @@ func file_proto_schema_proto_rawDescGZIP() []byte {
 	return file_proto_schema_proto_rawDescData
 }
 
-var file_proto_schema_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_proto_schema_proto_msgTypes = make([]protoimpl.MessageInfo, 3)
+var file_proto_schema_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
+var file_proto_schema_proto_msgTypes = make([]protoimpl.MessageInfo, 5)
 var file_proto_schema_proto_goTypes = []any{
-	(VehicleFeed_Line)(0),       // 0: VehicleFeed.Line
-	(*VehicleFeed)(nil),         // 1: VehicleFeed
-	(*VehicleFeed_Station)(nil), // 2: VehicleFeed.Station
-	(*VehicleFeed_Vehicle)(nil), // 3: VehicleFeed.Vehicle
+	(VehicleFeed_Line)(0),            // 0: VehicleFeed.Line
+	(VehicleFeed_Route_RouteType)(0), // 1: VehicleFeed.Route.RouteType
+	(*VehicleFeed)(nil),              // 2: VehicleFeed
+	(*VehicleFeed_FeedInfo)(nil),     // 3: VehicleFeed.FeedInfo
+	(*VehicleFeed_Route)(nil),        // 4: VehicleFeed.Route
+	(*VehicleFeed_Station)(nil),      // 5: VehicleFeed.Station
+	(*VehicleFeed_Vehicle)(nil),      // 6: VehicleFeed.Vehicle
 }
 var file_proto_schema_proto_depIdxs = []int32{
-	3, // 0: VehicleFeed.vehicles:type_name -> VehicleFeed.Vehicle
-	0, // 1: VehicleFeed.Vehicle.line:type_name -> VehicleFeed.Line
-	2, // 2: VehicleFeed.Vehicle.nearest_station:type_name -> VehicleFeed.Station
-	3, // [3:3] is the sub-list for method output_type
-	3, // [3:3] is the sub-list for method input_type
-	3, // [3:3] is the sub-list for extension type_name
-	3, // [3:3] is the sub-list for extension extendee
-	0, // [0:3] is the sub-list for field type_name
+	6, // 0: VehicleFeed.vehicles:type_name -> VehicleFeed.Vehicle
+	3, // 1: VehicleFeed.info:type_name -> VehicleFeed.FeedInfo
+	1, // 2: VehicleFeed.Route.type:type_name -> VehicleFeed.Route.RouteType
+	0, // 3: VehicleFeed.Vehicle.line:type_name -> VehicleFeed.Line
+	5, // 4: VehicleFeed.Vehicle.nearest_station:type_name -> VehicleFeed.Station
+	4, // 5: VehicleFeed.Vehicle.route:type_name -> VehicleFeed.Route
+	6, // [6:6] is the sub-list for method output_type
+	6, // [6:6] is the sub-list for method input_type
+	6, // [6:6] is the sub-list for extension type_name
+	6, // [6:6] is the sub-list for extension extendee
+	0, // [0:6] is the sub-list for field type_name
 }
 
 func init() { file_proto_schema_proto_init() }
@@ -352,8 +577,8 @@ func file_proto_schema_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_proto_schema_proto_rawDesc), len(file_proto_schema_proto_rawDesc)),
-			NumEnums:      1,
-			NumMessages:   3,
+			NumEnums:      2,
+			NumMessages:   5,
 			NumExtensions: 0,
 			NumServices:   0,
 		},
