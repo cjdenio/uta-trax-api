@@ -1,12 +1,11 @@
 import * as shapes from "./shapes.js";
 import protobuf from "https://cdn.jsdelivr.net/npm/protobufjs@8.0.0/dist/protobuf.js/+esm";
-import * as L from "https://unpkg.com/leaflet@1.9.4/dist/leaflet-src.esm.js";
+import * as L from "https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet-src.esm.js";
 
 let lastUpdated;
 
 function displayLastUpdated() {
   document.getElementById("last-updated").innerText = `${Math.floor((Date.now() - (lastUpdated * 1000)) / 1000)}s ago`
-  console.log("yeah")
 }
 
 setInterval(displayLastUpdated, 1000)
@@ -60,16 +59,45 @@ protobuf.load("/schema.proto").then((root) => {
     }
   }
 
+  function populateTotals(vehicles) {
+    const totals = {
+      bus: 0,
+      trax: 0,
+      frontrunner: 0,
+    }
+
+    for (const vehicle of vehicles) {
+      switch(vehicle.route.type) {
+        case RouteType.BUS:
+          totals.bus++;
+          break;
+        case RouteType.TRAM:
+          totals.trax++;
+          break;
+        case RouteType.RAIL:
+          totals.frontrunner++;
+          break;
+      }
+    }
+
+    document.getElementById("count-bus").innerText = totals.bus.toString()
+    document.getElementById("count-trax").innerText = totals.trax.toString()
+    document.getElementById("count-frontrunner").innerText = totals.frontrunner.toString()
+  }
+
   async function reload() {
     const bin = await fetch("/api").then((r) => r.arrayBuffer());
     const { vehicles, info } = root
       .lookupType("VehicleFeed")
       .decode(new Uint8Array(bin));
 
-    clearMap();
-
     lastUpdated = info.lastUpdate
     displayLastUpdated()
+
+    populateTotals(vehicles)
+
+    // render vehicles on map
+    clearMap();
 
     vehicles.forEach((vehicle) => {
       L.marker([vehicle.lat, vehicle.lon], {
@@ -115,10 +143,10 @@ protobuf.load("/schema.proto").then((root) => {
             : busLayer
         )
         .bindPopup(
-          `${routeDesignator(vehicle.route)} to ${vehicle.headsign.replace(
+          `<b>${routeDesignator(vehicle.route)}</b> to <b>${vehicle.headsign.replace(
             /^to /i,
             ""
-          )}<br />@ ${vehicle.nearestStation?.name}`
+          )}</b>${vehicle.nearestStation ? `<br />@ ${vehicle.nearestStation?.name}` : ""}<br /><br /><small>vehicle #: ${vehicle.id}</small>`
         );
     });
   }
