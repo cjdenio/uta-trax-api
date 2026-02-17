@@ -85,6 +85,8 @@ protobuf.load("/schema.proto").then((root) => {
     document.getElementById("count-frontrunner").innerText = totals.frontrunner.toString()
   }
 
+  let bannerVisible = false
+
   async function reload() {
     const bin = await fetch("/api").then((r) => r.arrayBuffer());
     const { vehicles, info } = root
@@ -96,10 +98,17 @@ protobuf.load("/schema.proto").then((root) => {
 
     populateTotals(vehicles)
     if (vehicles.length == 0) {
-      document.getElementById("banner").classList.remove("hidden")
-      map.invalidateSize()
+      if (!bannerVisible) {
+        document.getElementById("banner").classList.remove("hidden")
+        bannerVisible = true
+        map.invalidateSize()
+      }
     } else {
-      document.getElementById("banner").classList.add("hidden")
+      if (bannerVisible) {
+        document.getElementById("banner").classList.add("hidden")
+        bannerVisible = false
+        map.invalidateSize()
+      }
     }
 
     // render vehicles on map

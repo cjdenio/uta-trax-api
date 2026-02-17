@@ -51,17 +51,21 @@
       }
 
       #banner {
-        grid-column-start: 1;
-        grid-column-end: 3;
+        grid-column: span 2;
         background-color: #ef4444;
         color: white;
         display: flex;
         align-items: center;
         justify-content: center;
+        height: 40px;
       }
 
       #banner.hidden {
         display: none;
+      }
+      
+      #map, #sidebar {
+        grid-row: 2 / 3;
       }
     </style>
   </head>
@@ -71,7 +75,7 @@
       style="
         display: grid;
         grid-template-columns: auto 300px;
-        grid-template-rows: 40px 1fr;
+        grid-template-rows: auto 1fr;
         height: 100vh;
       "
     >

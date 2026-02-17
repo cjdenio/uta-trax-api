@@ -73,13 +73,26 @@ func getStationForVehicle(vehicle *pb.VehiclePosition) *pb.VehicleFeed_Station {
 	return nearestStop
 }
 
-func getVehicles() ([]*pb.VehiclePosition, *pb.FeedHeader, error) {
-	resp, err := http.Get("https://apps.rideuta.com/tms/gtfs/Vehicle")
-	if err != nil {
-		return nil, nil, err
-	}
+func fetchVehicleFeed() ([]byte, error) {
+	if os.Getenv("PRETEND_FEED") == "true" {
+		return os.ReadFile("pretend-feed.bin")
+	} else {
+		resp, err := http.Get("https://apps.rideuta.com/tms/gtfs/Vehicle")
+		if err != nil {
+			return nil, err
+		}
 
-	bytes, err := io.ReadAll(resp.Body)
+		bytes, err := io.ReadAll(resp.Body)
+		if err != nil {
+			return nil, err
+		}
+
+		return bytes, nil
+	}
+}
+
+func getVehicles() ([]*pb.VehiclePosition, *pb.FeedHeader, error) {
+	bytes, err := fetchVehicleFeed()
 	if err != nil {
 		return nil, nil, err
 	}
