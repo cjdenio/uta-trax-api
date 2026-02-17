@@ -1,6 +1,6 @@
 <!-- i SWEAR i write good code sometimes -->
 
-<!DOCTYPE html>
+<!doctype html>
 
 <html>
   <head>
@@ -49,12 +49,38 @@
         margin-left: -7px;
         margin-top: -7px;
       }
+
+      #banner {
+        grid-column-start: 1;
+        grid-column-end: 3;
+        background-color: #ef4444;
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      #banner.hidden {
+        display: none;
+      }
     </style>
   </head>
 
   <body>
-    <div style="display: flex">
-      <div id="map" style="height: 100vh; flex-grow: 1"></div>
+    <div
+      style="
+        display: grid;
+        grid-template-columns: auto 300px;
+        grid-template-rows: 40px 1fr;
+        height: 100vh;
+      "
+    >
+      <div id="banner" class="hidden">
+        There are currently no vehicles running. Either service has ended for
+        the day, or UTA's tracker isn't working. Come back later!
+      </div>
+
+      <div id="map"></div>
       <div id="sidebar">
         <h1>Every Transit Vehicle in Salt Lake City*</h1>
         <small>*or at least most of them</small>
@@ -110,23 +136,23 @@
           </label>
         </div>
 
-        <hr>
+        <hr />
 
         <div>
           <p>There are...</p>
           <ul>
             <li><strong id="count-bus">-</strong> bus(es)</li>
             <li><strong id="count-trax">-</strong> TRAX train(s)</li>
-            <li><strong id="count-frontrunner">-</strong> FrontRunner train(s)</li>
+            <li>
+              <strong id="count-frontrunner">-</strong> FrontRunner train(s)
+            </li>
           </ul>
           <p>...out and about</p>
         </div>
 
-        <hr>
+        <hr />
 
-        <div>
-          last updated: <span id="last-updated">-</span>
-        </div>
+        <div>last updated: <span id="last-updated">-</span></div>
       </div>
     </div>
 

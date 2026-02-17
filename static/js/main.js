@@ -95,6 +95,12 @@ protobuf.load("/schema.proto").then((root) => {
     displayLastUpdated()
 
     populateTotals(vehicles)
+    if (vehicles.length == 0) {
+      document.getElementById("banner").classList.remove("hidden")
+      map.invalidateSize()
+    } else {
+      document.getElementById("banner").classList.add("hidden")
+    }
 
     // render vehicles on map
     clearMap();
