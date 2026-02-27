@@ -8,6 +8,8 @@ import (
 	"math"
 	"net/http"
 	"os"
+	"strconv"
+	"strings"
 
 	pb "github.com/cjdenio/uta-trax-api/proto"
 	"google.golang.org/protobuf/proto"
@@ -121,7 +123,7 @@ type TripInfo struct {
 	Headsign  string
 }
 
-func feedifyVehicles(vehicles []*pb.VehiclePosition, header *pb.FeedHeader) pb.VehicleFeed {
+func feedifyVehicles(vehicles []*pb.VehiclePosition, header *pb.FeedHeader, routeTypes map[int]bool) pb.VehicleFeed {
 	vehicle_feed := make([]*pb.VehicleFeed_Vehicle, 0, len(vehicles))
 
 	for _, vehicle := range vehicles {
@@ -162,6 +164,10 @@ func feedifyVehicles(vehicles []*pb.VehiclePosition, header *pb.FeedHeader) pb.V
 		}
 
 		rows.Close()
+
+		if routeTypes != nil && !routeTypes[int(route_type)] {
+			continue
+		}
 
 		vehicle_feed = append(vehicle_feed, &pb.VehicleFeed_Vehicle{
 			Lat:     *vehicle.Position.Latitude,
@@ -224,7 +230,20 @@ func main() {
 			return
 		}
 
-		feed := feedifyVehicles(vehicles, header)
+		routeTypes := r.URL.Query().Get("route_types")
+		var routeTypeFilter map[int]bool
+
+		if routeTypes != "" {
+			routeTypeFilter = make(map[int]bool)
+			for _, t := range strings.Split(routeTypes, ",") {
+				routeTypeNumber, err := strconv.Atoi(t)
+				if err == nil {
+					routeTypeFilter[routeTypeNumber] = true
+				}
+			}
+		}
+
+		feed := feedifyVehicles(vehicles, header, routeTypeFilter)
 		b, err := proto.Marshal(&feed)
 		if err != nil {
 			log.Println(err)
