@@ -251,6 +251,7 @@ func main() {
 			return
 		}
 		w.Header().Add("Content-Type", "application/protobuf")
+		w.Header().Add("Content-Length", strconv.Itoa(len(b)))
 		w.Write(b)
 	})
 
