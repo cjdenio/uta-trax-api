@@ -52,6 +52,8 @@ protobuf.load("/schema.proto").then((root) => {
       return "OGX";
     } else if (route.id == "3686") {
       return "UVX";
+    } else if (route.id == "87711") {
+      return "MVX";
     } else if (route.type == RouteType.BUS) {
       return "#" + route.shortName;
     } else {
@@ -125,7 +127,7 @@ protobuf.load("/schema.proto").then((root) => {
           className: "",
           html: `<div class="vehicle ${
             vehicle.route.type == RouteType.BUS &&
-            !["92235", "3686"].includes(vehicle.route.id)
+            !["92235", "3686", "87711"].includes(vehicle.route.id)
               ? "vehicle-plain"
               : ""
           } ${
@@ -149,7 +151,7 @@ protobuf.load("/schema.proto").then((root) => {
         }),
       })
         .addTo(
-          ["92235", "3686"].includes(vehicle.route.id)
+          ["92235", "3686", "87711"].includes(vehicle.route.id)
             ? brtLayer
             : vehicle.route.type == RouteType.TRAM
             ? traxLayer
