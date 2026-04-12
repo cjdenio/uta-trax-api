@@ -163,6 +163,11 @@ func feedifyVehicles(vehicles []*pb.VehiclePosition, header *pb.FeedHeader, rout
 			continue
 		}
 
+		// force MVX to match other BRT services
+		if route_id == "87711" {
+			route_color = sql.NullString{Valid: true, String: "1191d0"}
+		}
+
 		rows.Close()
 
 		if routeTypes != nil && !routeTypes[int(route_type)] {
@@ -206,16 +211,6 @@ func main() {
 
 	scheduleDb = _db
 
-	// vehicles, err := getVehicles()
-	// if err != nil {
-	// 	log.Fatalln(err)
-	// }
-
-	// for _, v := range vehicles {
-	// 	station := getStationForVehicle(v)
-	// 	fmt.Println(station)
-	// }
-
 	http.Handle("/", http.FileServer(http.Dir("./static")))
 
 	http.HandleFunc("/schema.proto", func(w http.ResponseWriter, r *http.Request) {
@@ -235,7 +230,7 @@ func main() {
 
 		if routeTypes != "" {
 			routeTypeFilter = make(map[int]bool)
-			for _, t := range strings.Split(routeTypes, ",") {
+			for t := range strings.SplitSeq(routeTypes, ",") {
 				routeTypeNumber, err := strconv.Atoi(t)
 				if err == nil {
 					routeTypeFilter[routeTypeNumber] = true
