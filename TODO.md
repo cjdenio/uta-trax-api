@@ -1,0 +1,3 @@
+- mobile
+- advanced filtering
+- show stops for trip

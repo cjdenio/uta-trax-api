@@ -1,6 +1,7 @@
 import * as shapes from "./shapes.js";
 import protobuf from "https://cdn.jsdelivr.net/npm/protobufjs@8.0.0/dist/protobuf.js/+esm";
 import * as L from "https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet-src.esm.js";
+import stations from "./stations.js"
 
 let lastUpdated;
 
@@ -31,11 +32,38 @@ const brtLayer = L.layerGroup().addTo(map);
 const traxLayer = L.layerGroup().addTo(map);
 const frontRunnerLayer = L.layerGroup().addTo(map);
 
-L.polyline(shapes.blueLine, { color: "#004a97" }).addTo(map);
-L.polyline(shapes.redLine, { color: "#be2036" }).addTo(map);
-L.polyline(shapes.greenLine, { color: "#2eb566" }).addTo(map);
-L.polyline(shapes.sLine, { color: "#77777a" }).addTo(map);
-L.polyline(shapes.frontRunner, { color: "#c227b9" }).addTo(map);
+L.polyline(shapes.blueLine, { color: "#004a97", zIndexOffset: 10 }).addTo(map);
+L.polyline(shapes.redLine, { color: "#be2036", zIndexOffset: 10 }).addTo(map);
+L.polyline(shapes.greenLine, { color: "#2eb566", zIndexOffset: 10 }).addTo(map);
+L.polyline(shapes.sLine, { color: "#77777a", zIndexOffset: 10 }).addTo(map);
+L.polyline(shapes.frontRunner, { color: "#c227b9", zIndexOffset: 10 }).addTo(map);
+
+// render stations
+for (const station of stations) {
+    let color = "";
+    switch (station.lines[0]) {
+        case "red":
+            color = "#be2036"
+            break
+        case "blue":
+            color = "#004a97"
+            break
+        case "green":
+            color = "#2eb566"
+            break
+        case "s-line":
+            color = "#77777a"
+            break
+    }
+
+    L.marker([station.lat, station.lon], {
+        zIndexOffset: 2000,
+        icon: L.divIcon({
+            className: "",
+            html: `<div class="station" style="--color: ${color};"></div>`
+        })
+    }).addTo(map)
+}
 
 function clearMap() {
   busLayer.clearLayers();
@@ -121,8 +149,8 @@ protobuf.load("/schema.proto").then((root) => {
         zIndexOffset:
           vehicle.route.type == RouteType.TRAM ||
           vehicle.route.type == RouteType.RAIL
-            ? 1000
-            : 1,
+            ? 4000
+            : 3000,
         icon: L.divIcon({
           className: "",
           html: `<div class="vehicle ${

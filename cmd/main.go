@@ -257,5 +257,8 @@ func main() {
 
 	fmt.Printf("Started on port %s\n", port)
 
-	http.ListenAndServe(":"+port, nil)
+	err = http.ListenAndServe(":"+port, nil)
+	if err != nil {
+		log.Fatal(err)
+	}
 }
