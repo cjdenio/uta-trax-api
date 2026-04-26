@@ -1,3 +1,8 @@
+all: bin
+
+bin: cmd/main.go proto/*.go
+	go build -o bin cmd/main.go
+
 proto: proto/schema.pb.go proto/gtfs-realtime.pb.go
 
 proto/gtfs-realtime.pb.go: proto/gtfs-realtime.proto
