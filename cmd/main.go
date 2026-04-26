@@ -2,7 +2,6 @@ package main
 
 import (
 	"database/sql"
-	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -11,7 +10,6 @@ import (
 	"os"
 	"strconv"
 	"strings"
-	"time"
 
 	pb "github.com/cjdenio/uta-trax-api/proto"
 	"google.golang.org/protobuf/proto"
@@ -20,8 +18,6 @@ import (
 )
 
 var scheduleDb *sql.DB
-
-var gtfsRtCache []byte
 
 func distance(lat1 float64, lng1 float64, lat2 float64, lng2 float64) float64 {
 	radlat1 := float64(math.Pi * lat1 / 180)
@@ -98,21 +94,13 @@ func fetchVehicleFeed() ([]byte, error) {
 }
 
 func getVehicles() ([]*pb.VehiclePosition, *pb.FeedHeader, error) {
-	var bytes []byte
-
-	if len(gtfsRtCache) > 0 {
-		bytes = gtfsRtCache
-	} else {
-		return nil, nil, errors.New("no cache")
-		var err error
-		bytes, err = fetchVehicleFeed()
-		if err != nil {
-			return nil, nil, err
-		}
+	bytes, err := fetchVehicleFeed()
+	if err != nil {
+		return nil, nil, err
 	}
 
 	feed := pb.FeedMessage{}
-	err := proto.Unmarshal(bytes, &feed)
+	err = proto.Unmarshal(bytes, &feed)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -222,19 +210,6 @@ func main() {
 	}
 
 	scheduleDb = _db
-
-	go func() {
-		for {
-			feed, err := fetchVehicleFeed()
-			if err == nil {
-				gtfsRtCache = feed
-				log.Println("refreshed cache")
-			} else {
-				log.Println(err)
-			}
-			time.Sleep(1 * time.Second)
-		}
-	}()
 
 	http.Handle("/", http.FileServer(http.Dir("./static")))
 
