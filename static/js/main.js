@@ -60,7 +60,8 @@ for (const station of stations) {
         zIndexOffset: 2000,
         icon: L.divIcon({
             className: "",
-            html: `<div class="station" style="--color: ${color};"></div>`
+            html: `<div class="station" style="--color: ${color};"></div>`,
+            iconSize: [5, 5],
         })
     }).addTo(map)
 }
