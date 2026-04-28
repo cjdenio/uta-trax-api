@@ -54,6 +54,9 @@ for (const station of stations) {
         case "s-line":
             color = "#77777a"
             break
+        case "frontrunner":
+            color = "#c227b9"
+            break
     }
 
     L.marker([station.lat, station.lon], {

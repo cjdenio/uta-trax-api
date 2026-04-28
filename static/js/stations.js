@@ -348,4 +348,102 @@ export default [
         lon: -112.019345,
         lines: ["red"],
     },
+
+    // FrontRunner
+    {
+        name: "Ogden Central Station",
+        lat: 41.224285,
+        lon: -111.980631,
+        lines: ["frontrunner"],
+    },
+    {
+        name: "Clearfield Station",
+        lat: 41.094769,
+        lon: -112.013807,
+        lines: ["frontrunner"],
+    },
+    {
+        name: "Farmington Station",
+        lat: 40.987266,
+        lon: -111.903667,
+        lines: ["frontrunner"],
+    },
+    {
+        name: "Woods Cross Station",
+        lat: 40.880457,
+        lon: -111.903151,
+        lines: ["frontrunner"],
+    },
+    {
+        name: "Roy Station",
+        lat: 41.188757,
+        lon: -112.039378,
+        lines: ["frontrunner"],
+    },
+    {
+        name: "Salt Lake Central Station",
+        lat: 40.76234,
+        lon: -111.909052,
+        lines: ["frontrunner"],
+    },
+    {
+        name: "Layton Station",
+        lat: 41.056903,
+        lon: -111.964955,
+        lines: ["frontrunner"],
+    },
+    {
+        name: "American Fork Station",
+        lat: 40.374774,
+        lon: -111.820649,
+        lines: ["frontrunner"],
+    },
+    {
+        name: "Provo Central Station",
+        lat: 40.22544,
+        lon: -111.660632,
+        lines: ["frontrunner"],
+    },
+    {
+        name: "Lehi Station",
+        lat: 40.425196,
+        lon: -111.896354,
+        lines: ["frontrunner"],
+    },
+    {
+        name: "Orem Central Station",
+        lat: 40.28014,
+        lon: -111.725489,
+        lines: ["frontrunner"],
+    },
+    {
+        name: "Murray Central Station",
+        lat: 40.659758,
+        lon: -111.896432,
+        lines: ["frontrunner"],
+    },
+    {
+        name: "Draper Station",
+        lat: 40.515484,
+        lon: -111.904407,
+        lines: ["frontrunner"],
+    },
+    {
+        name: "South Jordan Station",
+        lat: 40.563155,
+        lon: -111.900753,
+        lines: ["frontrunner"],
+    },
+    {
+        name: "North Temple Station",
+        lat: 40.772532,
+        lon: -111.905124,
+        lines: ["frontrunner"],
+    },
+    {
+        name: "Vineyard Station",
+        lat: -111.750248,
+        lon: 7,
+        lines: ["frontrunner"],
+    },
 ];
