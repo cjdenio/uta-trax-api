@@ -2,6 +2,7 @@ package main
 
 import (
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	"io"
 	"log"
@@ -115,12 +116,6 @@ func getVehicles() ([]*pb.VehiclePosition, *pb.FeedHeader, error) {
 	}
 
 	return vehicles, feed.Header, nil
-}
-
-type TripInfo struct {
-	Line      pb.VehicleFeed_Line
-	Direction int32
-	Headsign  string
 }
 
 func feedifyVehicles(vehicles []*pb.VehiclePosition, header *pb.FeedHeader, routeTypes map[int]bool) pb.VehicleFeed {
@@ -238,16 +233,31 @@ func main() {
 			}
 		}
 
-		feed := feedifyVehicles(vehicles, header, routeTypeFilter)
-		b, err := proto.Marshal(&feed)
-		if err != nil {
-			log.Println(err)
-			w.WriteHeader(http.StatusInternalServerError)
-			return
+		if r.Header.Get("Accept") == "application/json" {
+			feed := feedifyVehicles(vehicles, header, routeTypeFilter)
+			response, err := json.Marshal(&feed)
+			if err != nil {
+				log.Println(err)
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+			w.Header().Add("Content-Type", "application/json")
+			w.Header().Add("Content-Length", strconv.Itoa(len(response)))
+			w.Write(response)
+		} else {
+			// send a protobuf
+
+			feed := feedifyVehicles(vehicles, header, routeTypeFilter)
+			b, err := proto.Marshal(&feed)
+			if err != nil {
+				log.Println(err)
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+			w.Header().Add("Content-Type", "application/protobuf")
+			w.Header().Add("Content-Length", strconv.Itoa(len(b)))
+			w.Write(b)
 		}
-		w.Header().Add("Content-Type", "application/protobuf")
-		w.Header().Add("Content-Length", strconv.Itoa(len(b)))
-		w.Write(b)
 	})
 
 	port := "3000"
