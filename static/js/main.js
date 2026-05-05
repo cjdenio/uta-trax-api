@@ -66,7 +66,7 @@ for (const station of stations) {
             html: `<div class="station" style="--color: ${color};"></div>`,
             iconSize: [5, 5],
         })
-    }).addTo(map)
+    }).addTo(map).bindPopup(station.name.replace(" Station", ""))
 }
 
 function clearMap() {
