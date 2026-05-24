@@ -20,6 +20,15 @@ import (
 
 var scheduleDb *sql.DB
 
+var headsignMappings map[string]string = map[string]string{
+	"to medical": "To University Medical",
+	"to airport": "To Airport",
+	"to draper": "To Draper",
+	"to salt lake": "To Salt Lake Central",
+	"to meadowbrook": "To Meadowbrook",
+	"to ballpark": "To Ballpark",
+}
+
 func distance(lat1 float64, lng1 float64, lat2 float64, lng2 float64) float64 {
 	radlat1 := float64(math.Pi * lat1 / 180)
 	radlat2 := float64(math.Pi * lat2 / 180)
@@ -158,9 +167,11 @@ func feedifyVehicles(vehicles []*pb.VehiclePosition, header *pb.FeedHeader, rout
 			continue
 		}
 
-		// force MVX to match other BRT services
-		if route_id == "87711" {
-			route_color = sql.NullString{Valid: true, String: "1191d0"}
+		// sometimes headsigns are weird. this lets me manually change them
+		if trip_headsign.Valid {
+			if mapping, ok := headsignMappings[strings.ToLower(trip_headsign.String)]; ok {
+				trip_headsign.String = mapping
+			}
 		}
 
 		rows.Close()
