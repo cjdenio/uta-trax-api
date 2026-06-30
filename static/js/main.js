@@ -2,6 +2,7 @@ import * as shapes from "./shapes.js";
 import protobuf from "https://cdn.jsdelivr.net/npm/protobufjs@8.0.0/dist/protobuf.js/+esm";
 import * as L from "https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet-src.esm.js";
 import stations from "./stations.js"
+import Alpine from "https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/module.esm.min.js";
 
 let lastUpdated;
 
@@ -203,31 +204,42 @@ protobuf.load("/schema.proto").then((root) => {
   reload();
 
   setInterval(reload, 5000);
-
-  for (const checkbox of document.querySelectorAll(".layer-toggle")) {
-    checkbox.addEventListener("input", (e) => {
-      let layer;
-
-      switch (e.target.name) {
-        case "bus":
-          layer = busLayer;
-          break;
-        case "brt":
-          layer = brtLayer;
-          break;
-        case "trax":
-          layer = traxLayer;
-          break;
-        case "frontrunner":
-          layer = frontRunnerLayer;
-          break;
-      }
-
-      if (e.target.checked) {
-        layer?.addTo(map);
-      } else {
-        layer?.remove();
-      }
-    });
-  }
 });
+
+Alpine.data('app', () => ({
+  busLayer: true,
+  brtLayer: true,
+  traxLayer: true,
+  frontRunnerLayer: true,
+
+  toggleLayer(name) {
+    let layer;
+
+    switch (name) {
+      case "bus":
+        layer = busLayer;
+        break;
+      case "brt":
+        layer = brtLayer;
+        break;
+      case "trax":
+        layer = traxLayer;
+        break;
+      case "frontRunner":
+        layer = frontRunnerLayer;
+        break;
+    }
+
+    let oldState = this[`${name}Layer`]
+
+    if (!oldState) {
+      layer?.addTo(map);
+    } else {
+      layer?.remove();
+    }
+
+    this[`${name}Layer`] = !oldState
+  },
+}))
+
+Alpine.start()
