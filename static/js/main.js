@@ -168,7 +168,7 @@ function renderVehicle(vehicle) {
           icon: renderVehicleIcon(vehicle),
         })
           .bindPopup(
-            `<b>${routeDesignator(vehicle.route)}</b> to <b>${vehicle.headsign.replace(
+            `<b>${routeDesignator(vehicle.route)}</b> to <b>${vehicle.headsign?.replace(
               /^to /i,
               ""
             )}</b>${vehicle.nearest_station ? `<br />@ ${vehicle.nearest_station?.name}` : ""}<br /><br /><small>vehicle #: ${vehicle.id}</small>`
