@@ -4,6 +4,8 @@
 
 <html>
   <head>
+    <title>UTA Vehicle Tracker</title>
+
     <link
       rel="stylesheet"
       href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
@@ -17,6 +19,10 @@
     <link href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300..800;1,300..800&display=swap" rel="stylesheet">
 
     <style>
+      .leaflet-marker-icon:has(.vehicle) {
+        transition: transform 300ms linear;
+      }
+
       html,
       body {
         margin: 0;

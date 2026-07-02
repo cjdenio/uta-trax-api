@@ -1,9 +1,11 @@
-import * as shapes from "./shapes.js";
 import protobuf from "https://cdn.jsdelivr.net/npm/protobufjs@8.0.0/dist/protobuf.js/+esm";
 import * as L from "https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet-src.esm.js";
-import stations from "./stations.js"
 import Alpine from "https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/module.esm.min.js";
 
+import * as shapes from "./shapes.js";
+import stations from "./stations.js"
+
+/** @type {number} */
 let lastUpdated;
 
 function displayLastUpdated() {
@@ -122,6 +124,54 @@ protobuf.load("/schema.proto").then((root) => {
 
   let bannerVisible = false
 
+  let currentVehicles = new Map()
+
+  function renderVehicleIcon(vehicle) {
+    return L.divIcon({
+      className: "",
+      html: `<div class="vehicle ${
+        vehicle.route.type == RouteType.BUS &&
+        !["92235", "3686", "87711"].includes(vehicle.route.id)
+          ? "vehicle-plain"
+          : ""
+      } ${
+        vehicle.route.type == RouteType.BUS ? "vehicle-small" : ""
+      }" style="--color: #${vehicle.route.color};">
+                <div style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;">
+                  <svg style="transform: rotate(${
+                    vehicle.bearing
+                  }deg) translateY(-12px); width: 18px;" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640"><!--!Font Awesome Free v7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2025 Fonticons, Inc.--><path d="M300.3 199.2C312.9 188.9 331.4 189.7 343.1 201.4L471.1 329.4C480.3 338.6 483 352.3 478 364.3C473 376.3 461.4 384 448.5 384L192.5 384C179.6 384 167.9 376.2 162.9 364.2C157.9 352.2 160.7 338.5 169.9 329.4L297.9 201.4L300.3 199.2z"/></svg>
+                </div>
+                ${
+                  vehicle.route.type == RouteType.BUS
+                    ? ICONS.bus
+                    : vehicle.route.type == RouteType.TRAM
+                    ? ICONS.tram
+                    : vehicle.route.type == RouteType.RAIL
+                    ? ICONS.train
+                    : ""
+                }
+              </div>`,
+    })
+  }
+
+  function renderVehicle(vehicle) {
+    return L.marker([vehicle.lat, vehicle.lon], {
+            zIndexOffset:
+              vehicle.route.type == RouteType.TRAM ||
+              vehicle.route.type == RouteType.RAIL
+                ? 4000
+                : 3000,
+            icon: renderVehicleIcon(vehicle),
+          })
+            .bindPopup(
+              `<b>${routeDesignator(vehicle.route)}</b> to <b>${vehicle.headsign.replace(
+                /^to /i,
+                ""
+              )}</b>${vehicle.nearestStation ? `<br />@ ${vehicle.nearestStation?.name}` : ""}<br /><br /><small>vehicle #: ${vehicle.id}</small>`
+            );
+  }
+
   async function reload() {
     const bin = await fetch("/api").then((r) => r.arrayBuffer());
     const { vehicles, info } = root
@@ -146,59 +196,40 @@ protobuf.load("/schema.proto").then((root) => {
       }
     }
 
-    // render vehicles on map
-    clearMap();
+    const seenVehicleIds = new Set()
 
     vehicles.forEach((vehicle) => {
-      L.marker([vehicle.lat, vehicle.lon], {
-        zIndexOffset:
-          vehicle.route.type == RouteType.TRAM ||
-          vehicle.route.type == RouteType.RAIL
-            ? 4000
-            : 3000,
-        icon: L.divIcon({
-          className: "",
-          html: `<div class="vehicle ${
-            vehicle.route.type == RouteType.BUS &&
-            !["92235", "3686", "87711"].includes(vehicle.route.id)
-              ? "vehicle-plain"
-              : ""
-          } ${
-            vehicle.route.type == RouteType.BUS ? "vehicle-small" : ""
-          }" style="--color: #${vehicle.route.color};">
-                    <div style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;">
-                      <svg style="transform: rotate(${
-                        vehicle.bearing
-                      }deg) translateY(-12px); width: 18px;" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640"><!--!Font Awesome Free v7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2025 Fonticons, Inc.--><path d="M300.3 199.2C312.9 188.9 331.4 189.7 343.1 201.4L471.1 329.4C480.3 338.6 483 352.3 478 364.3C473 376.3 461.4 384 448.5 384L192.5 384C179.6 384 167.9 376.2 162.9 364.2C157.9 352.2 160.7 338.5 169.9 329.4L297.9 201.4L300.3 199.2z"/></svg>
-                    </div>
-                    ${
-                      vehicle.route.type == RouteType.BUS
-                        ? ICONS.bus
-                        : vehicle.route.type == RouteType.TRAM
-                        ? ICONS.tram
-                        : vehicle.route.type == RouteType.RAIL
-                        ? ICONS.train
-                        : ""
-                    }
-                  </div>`,
-        }),
-      })
-        .addTo(
+      seenVehicleIds.add(vehicle.id)
+
+      if (currentVehicles.has(vehicle.id)) { // if this vehicle is already on the map, update its location
+        currentVehicles.get(vehicle.id).marker.setLatLng([vehicle.lat, vehicle.lon])
+        currentVehicles.get(vehicle.id).marker.setIcon(renderVehicleIcon(vehicle))
+      } else {
+        const marker = renderVehicle(vehicle)
+        marker.addTo(
           ["92235", "3686", "87711"].includes(vehicle.route.id)
             ? brtLayer
             : vehicle.route.type == RouteType.TRAM
-            ? traxLayer
-            : vehicle.route.type == RouteType.RAIL
-            ? frontRunnerLayer
-            : busLayer
-        )
-        .bindPopup(
-          `<b>${routeDesignator(vehicle.route)}</b> to <b>${vehicle.headsign.replace(
-            /^to /i,
-            ""
-          )}</b>${vehicle.nearestStation ? `<br />@ ${vehicle.nearestStation?.name}` : ""}<br /><br /><small>vehicle #: ${vehicle.id}</small>`
+              ? traxLayer
+              : vehicle.route.type == RouteType.RAIL
+                ? frontRunnerLayer
+                : busLayer
         );
+        currentVehicles.set(vehicle.id, {
+          vehicle,
+          marker,
+        })
+      }
     });
+
+    // remove any vehicles that should be removed
+    for (const key of currentVehicles.keys()) {
+      if (!seenVehicleIds.has(key)) {
+        console.log(`removing vehicle from route ${currentVehicles.get(key).vehicle.route.shortName}`)
+        currentVehicles.get(key).marker.remove()
+        currentVehicles.delete(key)
+      }
+    }
   }
 
   reload();
