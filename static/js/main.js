@@ -1,4 +1,3 @@
-import protobuf from "https://cdn.jsdelivr.net/npm/protobufjs@8.0.0/dist/protobuf.js/+esm";
 import * as L from "https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet-src.esm.js";
 import Alpine from "https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/module.esm.min.js";
 
@@ -13,6 +12,13 @@ function displayLastUpdated() {
 }
 
 setInterval(displayLastUpdated, 1000)
+
+const RouteType = {
+  TRAM: 1,
+  SUBWAY: 2,
+  RAIL: 3,
+  BUS: 4,
+}
 
 const ICONS = {
   bus: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640"><!--!Font Awesome Free v7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2025 Fonticons, Inc.--><path d="M192 64C139 64 96 107 96 160L96 448C96 477.8 116.4 502.9 144 510L144 544C144 561.7 158.3 576 176 576L192 576C209.7 576 224 561.7 224 544L224 512L416 512L416 544C416 561.7 430.3 576 448 576L464 576C481.7 576 496 561.7 496 544L496 510C523.6 502.9 544 477.8 544 448L544 160C544 107 501 64 448 64L192 64zM160 240C160 222.3 174.3 208 192 208L296 208L296 320L192 320C174.3 320 160 305.7 160 288L160 240zM344 320L344 208L448 208C465.7 208 480 222.3 480 240L480 288C480 305.7 465.7 320 448 320L344 320zM192 384C209.7 384 224 398.3 224 416C224 433.7 209.7 448 192 448C174.3 448 160 433.7 160 416C160 398.3 174.3 384 192 384zM448 384C465.7 384 480 398.3 480 416C480 433.7 465.7 448 448 448C430.3 448 416 433.7 416 416C416 398.3 430.3 384 448 384zM248 136C248 122.7 258.7 112 272 112L368 112C381.3 112 392 122.7 392 136C392 149.3 381.3 160 368 160L272 160C258.7 160 248 149.3 248 136z"/></svg>`,
@@ -79,163 +85,155 @@ function clearMap() {
   frontRunnerLayer.clearLayers();
 }
 
-protobuf.load("/schema.proto").then((root) => {
-  const RouteType = root.VehicleFeed.Route.RouteType;
+function routeDesignator(route) {
+  if (route.id == "92235") {
+    return "OGX";
+  } else if (route.id == "3686") {
+    return "UVX";
+  } else if (route.id == "87711") {
+    return "MVX";
+  } else if (route.type == RouteType.BUS) {
+    return "#" + route.short_name;
+  } else {
+    return route.long_name;
+  }
+}
 
-  function routeDesignator(route) {
-    if (route.id == "92235") {
-      return "OGX";
-    } else if (route.id == "3686") {
-      return "UVX";
-    } else if (route.id == "87711") {
-      return "MVX";
-    } else if (route.type == RouteType.BUS) {
-      return "#" + route.shortName;
-    } else {
-      return route.longName;
+function populateTotals(vehicles) {
+  const totals = {
+    bus: 0,
+    trax: 0,
+    frontrunner: 0,
+  }
+
+  for (const vehicle of vehicles) {
+    switch(vehicle.route.type) {
+      case RouteType.BUS:
+        totals.bus++;
+        break;
+      case RouteType.TRAM:
+        totals.trax++;
+        break;
+      case RouteType.RAIL:
+        totals.frontrunner++;
+        break;
     }
   }
 
-  function populateTotals(vehicles) {
-    const totals = {
-      bus: 0,
-      trax: 0,
-      frontrunner: 0,
-    }
+  document.getElementById("count-bus").innerText = totals.bus.toString()
+  document.getElementById("count-trax").innerText = totals.trax.toString()
+  document.getElementById("count-frontrunner").innerText = totals.frontrunner.toString()
+}
 
-    for (const vehicle of vehicles) {
-      switch(vehicle.route.type) {
-        case RouteType.BUS:
-          totals.bus++;
-          break;
-        case RouteType.TRAM:
-          totals.trax++;
-          break;
-        case RouteType.RAIL:
-          totals.frontrunner++;
-          break;
-      }
-    }
+let bannerVisible = false
 
-    document.getElementById("count-bus").innerText = totals.bus.toString()
-    document.getElementById("count-trax").innerText = totals.trax.toString()
-    document.getElementById("count-frontrunner").innerText = totals.frontrunner.toString()
-  }
+let currentVehicles = new Map()
 
-  let bannerVisible = false
+function renderVehicleIcon(vehicle) {
+  return L.divIcon({
+    className: "",
+    html: `<div class="vehicle ${
+      vehicle.route.type == RouteType.BUS &&
+      !["92235", "3686", "87711"].includes(vehicle.route.id)
+        ? "vehicle-plain"
+        : ""
+    } ${
+      vehicle.route.type == RouteType.BUS ? "vehicle-small" : ""
+    }" style="--color: #${vehicle.route.color};">
+              <div style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;">
+                <svg style="transform: rotate(${
+                  vehicle.bearing
+                }deg) translateY(-12px); width: 18px;" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640"><!--!Font Awesome Free v7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2025 Fonticons, Inc.--><path d="M300.3 199.2C312.9 188.9 331.4 189.7 343.1 201.4L471.1 329.4C480.3 338.6 483 352.3 478 364.3C473 376.3 461.4 384 448.5 384L192.5 384C179.6 384 167.9 376.2 162.9 364.2C157.9 352.2 160.7 338.5 169.9 329.4L297.9 201.4L300.3 199.2z"/></svg>
+              </div>
+              ${
+                vehicle.route.type == RouteType.BUS
+                  ? ICONS.bus
+                  : vehicle.route.type == RouteType.TRAM
+                  ? ICONS.tram
+                  : vehicle.route.type == RouteType.RAIL
+                  ? ICONS.train
+                  : ""
+              }
+            </div>`,
+  })
+}
 
-  let currentVehicles = new Map()
-
-  function renderVehicleIcon(vehicle) {
-    return L.divIcon({
-      className: "",
-      html: `<div class="vehicle ${
-        vehicle.route.type == RouteType.BUS &&
-        !["92235", "3686", "87711"].includes(vehicle.route.id)
-          ? "vehicle-plain"
-          : ""
-      } ${
-        vehicle.route.type == RouteType.BUS ? "vehicle-small" : ""
-      }" style="--color: #${vehicle.route.color};">
-                <div style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;">
-                  <svg style="transform: rotate(${
-                    vehicle.bearing
-                  }deg) translateY(-12px); width: 18px;" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640"><!--!Font Awesome Free v7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2025 Fonticons, Inc.--><path d="M300.3 199.2C312.9 188.9 331.4 189.7 343.1 201.4L471.1 329.4C480.3 338.6 483 352.3 478 364.3C473 376.3 461.4 384 448.5 384L192.5 384C179.6 384 167.9 376.2 162.9 364.2C157.9 352.2 160.7 338.5 169.9 329.4L297.9 201.4L300.3 199.2z"/></svg>
-                </div>
-                ${
-                  vehicle.route.type == RouteType.BUS
-                    ? ICONS.bus
-                    : vehicle.route.type == RouteType.TRAM
-                    ? ICONS.tram
-                    : vehicle.route.type == RouteType.RAIL
-                    ? ICONS.train
-                    : ""
-                }
-              </div>`,
-    })
-  }
-
-  function renderVehicle(vehicle) {
-    return L.marker([vehicle.lat, vehicle.lon], {
-            zIndexOffset:
-              vehicle.route.type == RouteType.TRAM ||
-              vehicle.route.type == RouteType.RAIL
-                ? 4000
-                : 3000,
-            icon: renderVehicleIcon(vehicle),
-          })
-            .bindPopup(
-              `<b>${routeDesignator(vehicle.route)}</b> to <b>${vehicle.headsign.replace(
-                /^to /i,
-                ""
-              )}</b>${vehicle.nearestStation ? `<br />@ ${vehicle.nearestStation?.name}` : ""}<br /><br /><small>vehicle #: ${vehicle.id}</small>`
-            );
-  }
-
-  async function reload() {
-    const bin = await fetch("/api").then((r) => r.arrayBuffer());
-    const { vehicles, info } = root
-      .lookupType("VehicleFeed")
-      .decode(new Uint8Array(bin));
-
-    lastUpdated = info.lastUpdate
-    displayLastUpdated()
-
-    populateTotals(vehicles)
-    if (vehicles.length == 0) {
-      if (!bannerVisible) {
-        document.getElementById("banner").classList.remove("hidden")
-        bannerVisible = true
-        map.invalidateSize()
-      }
-    } else {
-      if (bannerVisible) {
-        document.getElementById("banner").classList.add("hidden")
-        bannerVisible = false
-        map.invalidateSize()
-      }
-    }
-
-    const seenVehicleIds = new Set()
-
-    vehicles.forEach((vehicle) => {
-      seenVehicleIds.add(vehicle.id)
-
-      if (currentVehicles.has(vehicle.id)) { // if this vehicle is already on the map, update its location
-        currentVehicles.get(vehicle.id).marker.setLatLng([vehicle.lat, vehicle.lon])
-        currentVehicles.get(vehicle.id).marker.setIcon(renderVehicleIcon(vehicle))
-      } else {
-        const marker = renderVehicle(vehicle)
-        marker.addTo(
-          ["92235", "3686", "87711"].includes(vehicle.route.id)
-            ? brtLayer
-            : vehicle.route.type == RouteType.TRAM
-              ? traxLayer
-              : vehicle.route.type == RouteType.RAIL
-                ? frontRunnerLayer
-                : busLayer
-        );
-        currentVehicles.set(vehicle.id, {
-          vehicle,
-          marker,
+function renderVehicle(vehicle) {
+  return L.marker([vehicle.lat, vehicle.lon], {
+          zIndexOffset:
+            vehicle.route.type == RouteType.TRAM ||
+            vehicle.route.type == RouteType.RAIL
+              ? 4000
+              : 3000,
+          icon: renderVehicleIcon(vehicle),
         })
-      }
-    });
+          .bindPopup(
+            `<b>${routeDesignator(vehicle.route)}</b> to <b>${vehicle.headsign.replace(
+              /^to /i,
+              ""
+            )}</b>${vehicle.nearest_station ? `<br />@ ${vehicle.nearest_station?.name}` : ""}<br /><br /><small>vehicle #: ${vehicle.id}</small>`
+          );
+}
 
-    // remove any vehicles that should be removed
-    for (const key of currentVehicles.keys()) {
-      if (!seenVehicleIds.has(key)) {
-        console.log(`removing vehicle from route ${currentVehicles.get(key).vehicle.route.shortName}`)
-        currentVehicles.get(key).marker.remove()
-        currentVehicles.delete(key)
-      }
+async function reload() {
+  const { vehicles, info } = await fetch("/api", { headers: { Accept: "application/json" } }).then((r) => r.json());
+
+  lastUpdated = info.last_update
+  displayLastUpdated()
+
+  populateTotals(vehicles)
+  if (vehicles.length == 0) {
+    if (!bannerVisible) {
+      document.getElementById("banner").classList.remove("hidden")
+      bannerVisible = true
+      map.invalidateSize()
+    }
+  } else {
+    if (bannerVisible) {
+      document.getElementById("banner").classList.add("hidden")
+      bannerVisible = false
+      map.invalidateSize()
     }
   }
 
-  reload();
+  const seenVehicleIds = new Set()
 
-  setInterval(reload, 5000);
-});
+  vehicles.forEach((vehicle) => {
+    seenVehicleIds.add(vehicle.id)
+
+    if (currentVehicles.has(vehicle.id)) { // if this vehicle is already on the map, update its location
+      currentVehicles.get(vehicle.id).marker.setLatLng([vehicle.lat, vehicle.lon])
+      currentVehicles.get(vehicle.id).marker.setIcon(renderVehicleIcon(vehicle))
+    } else {
+      const marker = renderVehicle(vehicle)
+      marker.addTo(
+        ["92235", "3686", "87711"].includes(vehicle.route.id)
+          ? brtLayer
+          : vehicle.route.type == RouteType.TRAM
+            ? traxLayer
+            : vehicle.route.type == RouteType.RAIL
+              ? frontRunnerLayer
+              : busLayer
+      );
+      currentVehicles.set(vehicle.id, {
+        vehicle,
+        marker,
+      })
+    }
+  });
+
+  // remove any vehicles that should be removed
+  for (const key of currentVehicles.keys()) {
+    if (!seenVehicleIds.has(key)) {
+      currentVehicles.get(key).marker.remove()
+      currentVehicles.delete(key)
+    }
+  }
+}
+
+reload();
+
+setInterval(reload, 5000);
 
 Alpine.data('app', () => ({
   busLayer: true,
