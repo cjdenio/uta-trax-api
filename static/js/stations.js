@@ -442,8 +442,8 @@ export default [
     },
     {
         name: "Vineyard Station",
-        lat: -111.750248,
-        lon: 7,
+        lat: 40.312735,
+        lon: -111.750248,
         lines: ["frontrunner"],
     },
 ];
