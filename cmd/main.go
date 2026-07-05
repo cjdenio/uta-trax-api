@@ -21,12 +21,12 @@ import (
 var scheduleDb *sql.DB
 
 var headsignMappings map[string]string = map[string]string{
-	"to medical": "To University Medical",
-	"to airport": "To Airport",
-	"to draper": "To Draper",
-	"to salt lake": "To Salt Lake Central",
+	"to medical":     "To University Medical",
+	"to airport":     "To Airport",
+	"to draper":      "To Draper",
+	"to salt lake":   "To Salt Lake Central",
 	"to meadowbrook": "To Meadowbrook",
-	"to ballpark": "To Ballpark",
+	"to ballpark":    "To Ballpark",
 }
 
 func distance(lat1 float64, lng1 float64, lat2 float64, lng2 float64) float64 {
@@ -207,23 +207,8 @@ func feedifyVehicles(vehicles []*pb.VehiclePosition, header *pb.FeedHeader, rout
 	}
 }
 
-func main() {
-	fmt.Println("Opening database...")
-
-	_db, err := sql.Open("sqlite3", "uta-gtfs.db")
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	scheduleDb = _db
-
-	http.Handle("/", http.FileServer(http.Dir("./static")))
-
-	http.HandleFunc("/schema.proto", func(w http.ResponseWriter, r *http.Request) {
-		http.ServeFile(w, r, "./proto/schema.proto")
-	})
-
-	http.HandleFunc("/api", func(w http.ResponseWriter, r *http.Request) {
+func vehicleHandler(mode string) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		vehicles, header, err := getVehicles()
 		if err != nil {
 			log.Println(err)
@@ -244,7 +229,7 @@ func main() {
 			}
 		}
 
-		if r.Header.Get("Accept") == "application/json" {
+		if mode == "json" || r.Header.Get("Accept") == "application/json" {
 			feed := feedifyVehicles(vehicles, header, routeTypeFilter)
 			response, err := json.Marshal(&feed)
 			if err != nil {
@@ -269,7 +254,27 @@ func main() {
 			w.Header().Add("Content-Length", strconv.Itoa(len(b)))
 			w.Write(b)
 		}
+	}
+}
+
+func main() {
+	fmt.Println("Opening database...")
+
+	_db, err := sql.Open("sqlite3", "uta-gtfs.db")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	scheduleDb = _db
+
+	http.Handle("/", http.FileServer(http.Dir("./static")))
+
+	http.HandleFunc("/schema.proto", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, "./proto/schema.proto")
 	})
+
+	http.HandleFunc("/api", vehicleHandler(""))
+	http.HandleFunc("/api.json", vehicleHandler("json"))
 
 	port := "3000"
 	if portEnv, ok := os.LookupEnv("PORT"); ok {
