@@ -36,6 +36,13 @@ L.tileLayer(
   }
 ).addTo(map);
 
+map.on("zoomstart", () => {
+  document.body.classList.add("skip-vehicle-animation")
+})
+map.on("zoomend", () => {
+  document.body.classList.remove("skip-vehicle-animation")
+})
+
 const busLayer = L.layerGroup().addTo(map);
 const brtLayer = L.layerGroup().addTo(map);
 const traxLayer = L.layerGroup().addTo(map);

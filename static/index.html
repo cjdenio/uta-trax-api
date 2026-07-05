@@ -19,7 +19,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300..800;1,300..800&display=swap" rel="stylesheet">
 
     <style>
-      .leaflet-marker-icon:has(.vehicle) {
+      body:not(.skip-vehicle-animation) .leaflet-marker-icon:has(.vehicle) {
         transition: transform 300ms linear;
       }
 
@@ -71,6 +71,28 @@
         background-image: linear-gradient(to bottom right, #2eb566 33%, #004a97 33%, #004a97 66%, #be2036 66%);
       }
 
+      .nav {
+        grid-column: span 2;
+        background-color: #e5e7eb;
+        display: flex;
+        gap: 10px;
+        box-sizing: border-box;
+        line-height: 1.5;
+      }
+
+      .nav a {
+        display: block;
+        font-size: 30px;
+        padding: 0 20px;
+        text-decoration: none;
+        font-family: sans-serif;
+      }
+
+      .nav__item--selected {
+        background-color: white;
+        border-bottom: 3px solid #93c5fd;
+      }
+
       #banner {
         grid-column: span 2;
         background-color: #ef4444;
@@ -88,7 +110,7 @@
       }
 
       #map, #sidebar {
-        grid-row: 2 / 3;
+        grid-row: 3 / 4;
       }
 
       #sidebar label {
@@ -108,7 +130,7 @@
 
       #bottom-bar {
         display: none;
-        grid-row: 3 / 4;
+        grid-row: 4 / 5;
         gap: 10px;
         justify-content: center;
         padding: 10px;
@@ -126,7 +148,7 @@
       #container {
         display: grid;
         grid-template-columns: auto 300px;
-        grid-template-rows: auto 1fr;
+        grid-template-rows: auto auto 1fr;
         height: 100dvh;
       }
 
@@ -138,7 +160,7 @@
       @media screen and (max-width: 800px) {
         #container {
           grid-template-columns: 1fr;
-          grid-template-rows: auto 1fr auto;
+          grid-template-rows: auto auto 1fr auto;
         }
         #sidebar {
           display: none;
@@ -155,6 +177,11 @@
       <div id="banner" class="hidden">
         There are currently no vehicles running. Either service has ended for
         the day, or UTA's tracker isn't working. Come back later!
+      </div>
+      <div class="nav">
+        <a title="UTA Vehicle Tracker" href="https://uta.clb.li" class="nav__item--selected">🚆</a>
+        <a title="TRAXcidents" href="https://traxcidents.clb.li">💥</a>
+        <a title="GreenBike Firehose" href="https://greenbike.clb.li">🚲</a>
       </div>
 
       <div id="map"></div>
