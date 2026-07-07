@@ -165,6 +165,13 @@ function renderVehicleIcon(vehicle) {
   })
 }
 
+function vehiclePopupContent(vehicle) {
+  return `<b>${routeDesignator(vehicle.route)}</b> to <b>${vehicle.headsign?.replace(
+              /^to /i,
+              ""
+            )}</b>${vehicle.nearest_station ? `<br />@ ${vehicle.nearest_station?.name}` : ""}<br /><br /><small>vehicle #: ${vehicle.id}</small>`
+}
+
 function renderVehicle(vehicle) {
   return L.marker([vehicle.lat, vehicle.lon], {
           zIndexOffset:
@@ -173,13 +180,7 @@ function renderVehicle(vehicle) {
               ? 4000
               : 3000,
           icon: renderVehicleIcon(vehicle),
-        })
-          .bindPopup(
-            `<b>${routeDesignator(vehicle.route)}</b> to <b>${vehicle.headsign?.replace(
-              /^to /i,
-              ""
-            )}</b>${vehicle.nearest_station ? `<br />@ ${vehicle.nearest_station?.name}` : ""}<br /><br /><small>vehicle #: ${vehicle.id}</small>`
-          );
+        }).bindPopup(vehiclePopupContent(vehicle));
 }
 
 async function reload() {
@@ -211,6 +212,7 @@ async function reload() {
     if (currentVehicles.has(vehicle.id)) { // if this vehicle is already on the map, update its location
       currentVehicles.get(vehicle.id).marker.setLatLng([vehicle.lat, vehicle.lon])
       currentVehicles.get(vehicle.id).marker.setIcon(renderVehicleIcon(vehicle))
+      currentVehicles.get(vehicle.id).marker.setPopupContent(vehiclePopupContent(vehicle))
     } else {
       const marker = renderVehicle(vehicle)
       marker.addTo(
