@@ -166,10 +166,21 @@ function renderVehicleIcon(vehicle) {
 }
 
 function vehiclePopupContent(vehicle) {
-  return `<b>${routeDesignator(vehicle.route)}</b> to <b>${vehicle.headsign?.replace(
+  let content = `<b>${routeDesignator(vehicle.route)}</b>`
+  if (vehicle.headsign) {
+    content += ` to <b>${vehicle.headsign.replace(
               /^to /i,
               ""
-            )}</b>${vehicle.nearest_station ? `<br />@ ${vehicle.nearest_station?.name}` : ""}<br /><br /><small>vehicle #: ${vehicle.id}</small>`
+            )}</b>`
+  }
+
+  if (vehicle.nearest_station) {
+    content += `<br />@ ${vehicle.nearest_station.name}`
+  }
+
+  content += `<br /><br /><small>vehicle #: ${vehicle.id}</small>`
+
+  return content
 }
 
 function renderVehicle(vehicle) {
