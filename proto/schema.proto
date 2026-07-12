@@ -48,6 +48,7 @@ message VehicleFeed {
     Station nearest_station = 6;
     string headsign = 7;
     Route route = 8;
+    string trip_id = 10;
   }
 
   repeated Vehicle vehicles = 1;

@@ -157,7 +157,6 @@ func feedifyVehicles(vehicles []*pb.VehiclePosition, header *pb.FeedHeader, rout
 		var route_long_name sql.NullString
 
 		if !rows.Next() {
-			fmt.Println(rows.Err())
 			continue
 		}
 
@@ -196,6 +195,7 @@ func feedifyVehicles(vehicles []*pb.VehiclePosition, header *pb.FeedHeader, rout
 				ShortName: route_short_name.String,
 				LongName:  route_long_name.String,
 			},
+			TripId: *vehicle.Trip.TripId,
 		})
 	}
 

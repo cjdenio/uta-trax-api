@@ -178,7 +178,7 @@ function vehiclePopupContent(vehicle) {
     content += `<br />@ ${vehicle.nearest_station.name}`
   }
 
-  content += `<br /><br /><small>vehicle #: ${vehicle.id}</small>`
+  content += `<br /><br /><small>vehicle #: ${vehicle.id} &middot; trip ID: ${vehicle.trip_id}</small>`
 
   return content
 }
