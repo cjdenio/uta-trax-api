@@ -15,7 +15,6 @@ setInterval(displayLastUpdated, 1000)
 
 const RouteType = {
   TRAM: 1,
-  SUBWAY: 2,
   RAIL: 3,
   BUS: 4,
 }
@@ -175,7 +174,11 @@ function vehiclePopupContent(vehicle) {
   }
 
   if (vehicle.nearest_station) {
-    content += `<br />@ ${vehicle.nearest_station.name}`
+    let station = vehicle.nearest_station.name
+    if (station.toLowerCase().endsWith("station")) {
+      station = station.replace(/ station$/i, "")
+    }
+    content += `<br />@ ${station}`
   }
 
   content += `<br /><br /><small>vehicle #: ${vehicle.id} &middot; trip ID: ${vehicle.trip_id}</small>`
