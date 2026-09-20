@@ -252,7 +252,7 @@ function renderVehicle(vehicle) {
 }
 
 async function reload() {
-  const { vehicles, info } = await fetch("/api", { headers: { Accept: "application/json" } }).then((r) => r.json());
+  const { vehicles = [], info } = await fetch("/api", { headers: { Accept: "application/json" } }).then((r) => r.json());
 
   lastUpdated = info.last_update
   displayLastUpdated()
@@ -283,18 +283,19 @@ async function reload() {
       currentVehicles.get(vehicle.id).marker.setPopupContent(vehiclePopupContent(vehicle))
     } else {
       const marker = renderVehicle(vehicle)
-      marker.addTo(
-        ["92235", "3686", "87711"].includes(vehicle.route.id)
-          ? brtLayer
-          : vehicle.route.type == RouteType.TRAM
-            ? traxLayer
-            : vehicle.route.type == RouteType.RAIL
-              ? frontRunnerLayer
-              : busLayer
-      );
+      const layer = ["92235", "3686", "87711"].includes(vehicle.route.id)
+        ? brtLayer
+        : vehicle.route.type == RouteType.TRAM
+          ? traxLayer
+          : vehicle.route.type == RouteType.RAIL
+            ? frontRunnerLayer
+            : busLayer
+
+      marker.addTo(layer);
       currentVehicles.set(vehicle.id, {
         vehicle,
         marker,
+        layer,
       })
     }
   });
@@ -302,7 +303,7 @@ async function reload() {
   // remove any vehicles that should be removed
   for (const key of currentVehicles.keys()) {
     if (!seenVehicleIds.has(key)) {
-      currentVehicles.get(key).marker.remove()
+      currentVehicles.get(key).marker.removeFrom(currentVehicles.get(key).layer)
       currentVehicles.delete(key)
     }
   }
