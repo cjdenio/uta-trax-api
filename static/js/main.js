@@ -91,11 +91,15 @@ const brtLayer = L.layerGroup().addTo(map);
 const traxLayer = L.layerGroup().addTo(map);
 const frontRunnerLayer = L.layerGroup().addTo(map);
 
-L.polyline(shapes.blueLine, { color: "#004a97", zIndexOffset: 10 }).addTo(map);
-L.polyline(shapes.redLine, { color: "#be2036", zIndexOffset: 10 }).addTo(map);
-L.polyline(shapes.greenLine, { color: "#2eb566", zIndexOffset: 10 }).addTo(map);
-L.polyline(shapes.sLine, { color: "#77777a", zIndexOffset: 10 }).addTo(map);
-L.polyline(shapes.frontRunner, { color: "#c227b9", zIndexOffset: 10 }).addTo(map);
+const railLayer = L.layerGroup().addTo(map);
+
+const currentRouteLayer = L.layerGroup().addTo(map);
+
+L.polyline(shapes.blueLine, { color: "#004a97", zIndexOffset: 10 }).addTo(railLayer);
+L.polyline(shapes.redLine, { color: "#be2036", zIndexOffset: 10 }).addTo(railLayer);
+L.polyline(shapes.greenLine, { color: "#2eb566", zIndexOffset: 10 }).addTo(railLayer);
+L.polyline(shapes.sLine, { color: "#77777a", zIndexOffset: 10 }).addTo(railLayer);
+L.polyline(shapes.frontRunner, { color: "#c227b9", zIndexOffset: 10 }).addTo(railLayer);
 
 // render stations
 for (const station of stations) {
@@ -240,6 +244,18 @@ function vehiclePopupContent(vehicle) {
   return content
 }
 
+const tripShapeCache = new Map();
+
+async function getTripShape(tripId) {
+  if (tripShapeCache.has(tripId)) {
+    return tripShapeCache.get(tripId);
+  } else {
+    const data = await fetch(`/api/trips/${tripId}`).then(r => r.json());
+    tripShapeCache.set(tripId, data.shape);
+    return data.shape;
+  }
+}
+
 function renderVehicle(vehicle) {
   return L.marker([vehicle.lat, vehicle.lon], {
           zIndexOffset:
@@ -248,7 +264,20 @@ function renderVehicle(vehicle) {
               ? 4000
               : 3000,
           icon: renderVehicleIcon(vehicle),
-        }).bindPopup(vehiclePopupContent(vehicle));
+  }).bindPopup(vehiclePopupContent(vehicle)).on("popupopen", () => {
+    getTripShape(vehicle.trip_id).then(shape => {
+      console.log(shape)
+      for (const layer of railLayer.getLayers()) {
+        layer.setStyle({ opacity: 0.2 });
+      }
+      L.polyline(shape, { color: `#${vehicle.route.color}`, zIndexOffset: 10 }).addTo(currentRouteLayer);
+    })
+  }).on("popupclose", () => {
+    for (const layer of railLayer.getLayers()) {
+      layer.setStyle({ opacity: 1.0 });
+    }
+    currentRouteLayer.clearLayers();
+  });
 }
 
 async function reload() {

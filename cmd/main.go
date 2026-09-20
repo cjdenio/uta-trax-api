@@ -257,6 +257,37 @@ func vehicleHandler(mode string) http.HandlerFunc {
 	}
 }
 
+func tripHandler(w http.ResponseWriter, r *http.Request) {
+	rows, err := scheduleDb.Query(`SELECT shapes.shape_pt_lat, shapes.shape_pt_lon FROM shapes INNER JOIN trips ON trips.shape_id = shapes.shape_id WHERE trips.trip_id = ? ORDER BY shapes.shape_pt_sequence ASC`, r.PathValue("trip"))
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	var points [][]float64
+
+	for rows.Next() {
+		var lat float64
+		var lon float64
+		err = rows.Scan(&lat, &lon)
+		if err != nil {
+			break
+		}
+
+		points = append(points, []float64{lat, lon})
+	}
+
+	if len(points) == 0 {
+		w.WriteHeader(http.StatusNotFound)
+		return
+	}
+
+	w.Header().Add("Content-Type", "application/json")
+
+	response, _ := json.Marshal(map[string]any{"shape": points})
+	w.Write(response)
+}
+
 func main() {
 	fmt.Println("Opening database...")
 
@@ -275,6 +306,7 @@ func main() {
 
 	http.HandleFunc("/api", vehicleHandler(""))
 	http.HandleFunc("/api.json", vehicleHandler("json"))
+	http.HandleFunc("/api/trips/{trip}", tripHandler)
 
 	port := "3000"
 	if portEnv, ok := os.LookupEnv("PORT"); ok {
