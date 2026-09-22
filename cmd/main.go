@@ -134,6 +134,7 @@ func feedifyVehicles(vehicles []*pb.VehiclePosition, header *pb.FeedHeader, rout
 		rows, err := scheduleDb.Query(`
 			SELECT
 				trips.route_id,
+				trips.shape_id,
 				trips.trip_headsign,
 				routes.route_type,
 				routes.route_color,
@@ -150,6 +151,7 @@ func feedifyVehicles(vehicles []*pb.VehiclePosition, header *pb.FeedHeader, rout
 		}
 
 		var route_id string
+		var shape_id string
 		var trip_headsign sql.NullString
 		var route_type int32
 		var route_color sql.NullString
@@ -160,7 +162,7 @@ func feedifyVehicles(vehicles []*pb.VehiclePosition, header *pb.FeedHeader, rout
 			continue
 		}
 
-		err = rows.Scan(&route_id, &trip_headsign, &route_type, &route_color, &route_short_name, &route_long_name)
+		err = rows.Scan(&route_id, &shape_id, &trip_headsign, &route_type, &route_color, &route_short_name, &route_long_name)
 		if err != nil {
 			fmt.Println(err)
 			continue
@@ -195,7 +197,8 @@ func feedifyVehicles(vehicles []*pb.VehiclePosition, header *pb.FeedHeader, rout
 				ShortName: route_short_name.String,
 				LongName:  route_long_name.String,
 			},
-			TripId: *vehicle.Trip.TripId,
+			TripId:  *vehicle.Trip.TripId,
+			ShapeId: shape_id,
 		})
 	}
 
@@ -288,6 +291,37 @@ func tripHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write(response)
 }
 
+func shapeHandler(w http.ResponseWriter, r *http.Request) {
+	rows, err := scheduleDb.Query(`SELECT shapes.shape_pt_lat, shapes.shape_pt_lon FROM shapes WHERE shapes.shape_id = ? ORDER BY shapes.shape_pt_sequence ASC`, r.PathValue("shape"))
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	var points [][]float64
+
+	for rows.Next() {
+		var lat float64
+		var lon float64
+		err = rows.Scan(&lat, &lon)
+		if err != nil {
+			break
+		}
+
+		points = append(points, []float64{lat, lon})
+	}
+
+	if len(points) == 0 {
+		w.WriteHeader(http.StatusNotFound)
+		return
+	}
+
+	w.Header().Add("Content-Type", "application/json")
+
+	response, _ := json.Marshal(map[string]any{"shape": points})
+	w.Write(response)
+}
+
 func main() {
 	fmt.Println("Opening database...")
 
@@ -307,6 +341,7 @@ func main() {
 	http.HandleFunc("/api", vehicleHandler(""))
 	http.HandleFunc("/api.json", vehicleHandler("json"))
 	http.HandleFunc("/api/trips/{trip}", tripHandler)
+	http.HandleFunc("/api/shapes/{shape}", shapeHandler)
 
 	port := "3000"
 	if portEnv, ok := os.LookupEnv("PORT"); ok {

@@ -1,4 +1,5 @@
 syntax = "proto3";
+
 option go_package = "github.com/cjdenio/uta-trax-api/proto";
 
 message VehicleFeed {
@@ -49,6 +50,7 @@ message VehicleFeed {
     string headsign = 7;
     Route route = 8;
     string trip_id = 10;
+    string shape_id = 11;
   }
 
   repeated Vehicle vehicles = 1;

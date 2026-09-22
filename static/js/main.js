@@ -13,6 +13,13 @@ function displayLastUpdated() {
 
 setInterval(displayLastUpdated, 1000)
 
+const BRT_ROUTES = [
+  "92235", // OGX
+  "3686",  // UVX
+  "87711", // MVX
+  "90585", // OGX Wildcat Shuttle
+]
+
 const RouteType = {
   TRAM: 1,
   RAIL: 3,
@@ -206,7 +213,7 @@ function renderVehicleIcon(vehicle) {
     className: "",
     html: `<div class="vehicle ${
       vehicle.route.type == RouteType.BUS &&
-      !["92235", "3686", "87711"].includes(vehicle.route.id)
+      !BRT_ROUTES.includes(vehicle.route.id)
         ? "vehicle-plain"
         : ""
     } ${
@@ -246,12 +253,12 @@ function vehiclePopupContent(vehicle) {
 
 const tripShapeCache = new Map();
 
-async function getTripShape(tripId) {
-  if (tripShapeCache.has(tripId)) {
-    return tripShapeCache.get(tripId);
+async function getTripShape(shapeId) {
+  if (tripShapeCache.has(shapeId)) {
+    return tripShapeCache.get(shapeId);
   } else {
-    const data = await fetch(`/api/trips/${tripId}`).then(r => r.json());
-    tripShapeCache.set(tripId, data.shape);
+    const data = await fetch(`/api/shapes/${shapeId}`).then(r => r.json());
+    tripShapeCache.set(shapeId, data.shape);
     return data.shape;
   }
 }
@@ -265,8 +272,7 @@ function renderVehicle(vehicle) {
               : 3000,
           icon: renderVehicleIcon(vehicle),
   }).bindPopup(vehiclePopupContent(vehicle)).on("popupopen", () => {
-    getTripShape(vehicle.trip_id).then(shape => {
-      console.log(shape)
+    getTripShape(vehicle.shape_id).then(shape => {
       for (const layer of railLayer.getLayers()) {
         layer.setStyle({ opacity: 0.2 });
       }
@@ -312,7 +318,7 @@ async function reload() {
       currentVehicles.get(vehicle.id).marker.setPopupContent(vehiclePopupContent(vehicle))
     } else {
       const marker = renderVehicle(vehicle)
-      const layer = ["92235", "3686", "87711"].includes(vehicle.route.id)
+      const layer = BRT_ROUTES.includes(vehicle.route.id)
         ? brtLayer
         : vehicle.route.type == RouteType.TRAM
           ? traxLayer

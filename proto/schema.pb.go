@@ -386,6 +386,7 @@ type VehicleFeed_Vehicle struct {
 	Headsign       string                 `protobuf:"bytes,7,opt,name=headsign,proto3" json:"headsign,omitempty"`
 	Route          *VehicleFeed_Route     `protobuf:"bytes,8,opt,name=route,proto3" json:"route,omitempty"`
 	TripId         string                 `protobuf:"bytes,10,opt,name=trip_id,json=tripId,proto3" json:"trip_id,omitempty"`
+	ShapeId        string                 `protobuf:"bytes,11,opt,name=shape_id,json=shapeId,proto3" json:"shape_id,omitempty"`
 	unknownFields  protoimpl.UnknownFields
 	sizeCache      protoimpl.SizeCache
 }
@@ -490,11 +491,18 @@ func (x *VehicleFeed_Vehicle) GetTripId() string {
 	return ""
 }
 
+func (x *VehicleFeed_Vehicle) GetShapeId() string {
+	if x != nil {
+		return x.ShapeId
+	}
+	return ""
+}
+
 var File_proto_schema_proto protoreflect.FileDescriptor
 
 const file_proto_schema_proto_rawDesc = "" +
 	"\n" +
-	"\x12proto/schema.proto\"\xe8\x06\n" +
+	"\x12proto/schema.proto\"\x83\a\n" +
 	"\vVehicleFeed\x120\n" +
 	"\bvehicles\x18\x01 \x03(\v2\x14.VehicleFeed.VehicleR\bvehicles\x12)\n" +
 	"\x04info\x18\x02 \x01(\v2\x15.VehicleFeed.FeedInfoR\x04info\x1a+\n" +
@@ -519,7 +527,7 @@ const file_proto_schema_proto_rawDesc = "" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12\x10\n" +
 	"\x03lat\x18\x03 \x01(\x02R\x03lat\x12\x10\n" +
-	"\x03lon\x18\x04 \x01(\x02R\x03lon\x1a\xba\x02\n" +
+	"\x03lon\x18\x04 \x01(\x02R\x03lon\x1a\xd5\x02\n" +
 	"\aVehicle\x12\x10\n" +
 	"\x03lat\x18\x01 \x01(\x02R\x03lat\x12\x10\n" +
 	"\x03lon\x18\x02 \x01(\x02R\x03lon\x12\x18\n" +
@@ -531,7 +539,8 @@ const file_proto_schema_proto_rawDesc = "" +
 	"\bheadsign\x18\a \x01(\tR\bheadsign\x12(\n" +
 	"\x05route\x18\b \x01(\v2\x12.VehicleFeed.RouteR\x05route\x12\x17\n" +
 	"\atrip_id\x18\n" +
-	" \x01(\tR\x06tripId\"Z\n" +
+	" \x01(\tR\x06tripId\x12\x19\n" +
+	"\bshape_id\x18\v \x01(\tR\ashapeId\"Z\n" +
 	"\x04Line\x12\x14\n" +
 	"\x10LINE_UNSPECIFIED\x10\x00\x12\t\n" +
 	"\x05GREEN\x10\x01\x12\a\n" +
