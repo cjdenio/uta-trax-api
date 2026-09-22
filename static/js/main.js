@@ -274,10 +274,10 @@ function renderVehicle(vehicle) {
               : 3000,
           icon: renderVehicleIcon(vehicle),
   }).bindPopup(vehiclePopupContent(vehicle)).on("popupopen", () => {
+    for (const layer of railLayer.getLayers()) {
+      layer.setStyle({ opacity: 0.2 });
+    }
     getTripShape(vehicle.shape_id).then(shape => {
-      for (const layer of railLayer.getLayers()) {
-        layer.setStyle({ opacity: 0.2 });
-      }
       L.polyline(shape, { color: `#${vehicle.route.color}`, zIndexOffset: 10 }).addTo(currentRouteLayer);
     })
   }).on("popupclose", () => {
