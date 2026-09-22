@@ -149,6 +149,8 @@ function clearMap() {
 function routeDesignator(route) {
   if (route.id == "92235") {
     return "OGX";
+  } else if (route.id == "90585") {
+    return "OGX Wildcat Shuttle";
   } else if (route.id == "3686") {
     return "UVX";
   } else if (route.id == "87711") {
