@@ -336,6 +336,7 @@ type Departure struct {
 	DepartureTime     time.Time `json:"departureTime"`
 	Headsign          string    `json:"headsign"`
 	PredictedPlatform int       `json:"predictedPlatform,omitempty"`
+	TripId            string    `json:"tripId"`
 }
 
 type ApiDepartures struct {
@@ -476,6 +477,7 @@ func upcomingDeparturesHandler(w http.ResponseWriter, r *http.Request) {
 			DepartureTime:     time.Date(from.Year(), from.Month(), from.Day(), t.Hour(), t.Minute(), t.Second(), 0, loc),
 			Headsign:          departure.TripHeadsign,
 			PredictedPlatform: predictPlatform(departure),
+			TripId:            departure.TripId,
 		})
 	}
 
