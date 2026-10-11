@@ -11,14 +11,17 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"time"
 
+	"github.com/cjdenio/uta-trax-api/pkg/gtfs"
 	pb "github.com/cjdenio/uta-trax-api/proto"
+	"github.com/jmoiron/sqlx"
 	"google.golang.org/protobuf/proto"
 
 	_ "github.com/mattn/go-sqlite3"
 )
 
-var scheduleDb *sql.DB
+var scheduleDb *sqlx.DB
 
 var headsignMappings map[string]string = map[string]string{
 	"to medical":     "To University Medical",
@@ -322,10 +325,173 @@ func shapeHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write(response)
 }
 
+type Route struct {
+	ID        string `json:"routeId"`
+	ShortName string `json:"shortName"`
+	LongName  string `json:"longName"`
+}
+
+type Departure struct {
+	Route             Route     `json:"route"`
+	DepartureTime     time.Time `json:"departureTime"`
+	Headsign          string    `json:"headsign"`
+	PredictedPlatform int       `json:"predictedPlatform,omitempty"`
+}
+
+type ApiDepartures struct {
+	Departures []Departure `json:"departures"`
+	To         time.Time   `json:"to"`
+}
+
+type DbDeparture struct {
+	RouteId        string `db:"route_id"`
+	RouteShortName string `db:"route_short_name"`
+	RouteLongName  string `db:"route_long_name"`
+	DepartureTime  string `db:"departure_time"`
+	TripHeadsign   string `db:"trip_headsign"`
+	TripId         string `db:"trip_id"`
+	DirectionId    int    `db:"direction_id"`
+	StopId         string `db:"stop_id"`
+	PassingTrain   bool   `db:"passing_train"`
+}
+
+var predictionData map[string][4]int = map[string][4]int{
+	"21760": {1, 2, 0, 0}, // Roy Station
+	"21757": {0, 0, 1, 1}, // Clearfield Station
+	"21772": {1, 2, 0, 0}, // Layton Station
+	"21758": {0, 0, 1, 1}, // Farmington Station
+	"21759": {0, 0, 1, 1}, // Woods Cross Station
+	"23113": {1, 2, 1, 2}, // North Temple Station
+	"21771": {1, 2, 1, 2}, // Salt Lake Central Station
+	"23080": {2, 1, 1, 1}, // Murray Central Station
+	"23082": {0, 0, 2, 2}, // South Jordan Station
+	"23081": {1, 2, 0, 0}, // Draper Station
+	"23074": {1, 2, 1, 1}, // Lehi Station
+	"23071": {0, 0, 2, 2}, // American Fork Station
+	"25330": {2, 1, 2, 2}, // Vineyard Station
+	"23076": {0, 0, 2, 2}, // Orem Central Station
+}
+
+func predictPlatform(d DbDeparture) int {
+	if d.RouteShortName != "750" {
+		return 0
+	}
+
+	data, ok := predictionData[d.StopId]
+	if !ok {
+		return 0
+	}
+
+	idx := 0
+	if !d.PassingTrain {
+		idx += 2
+	}
+
+	if d.DirectionId == 1 {
+		idx += 1
+	}
+	return data[idx]
+}
+
+func upcomingDeparturesHandler(w http.ResponseWriter, r *http.Request) {
+	stationIds := strings.Split(r.URL.Query().Get("stationIds"), ",")
+	if r.URL.Query().Get("stationIds") == "" || len(stationIds) == 0 {
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte("missing stationIds param"))
+		return
+	}
+
+	loc, _ := time.LoadLocation("America/Denver") // ew this shouldn't be hardcoded
+
+	fromStr := r.URL.Query().Get("from")
+	from := time.Now().In(loc)
+	if fromStr != "" {
+		fromInt, err := strconv.ParseInt(fromStr, 10, 64)
+		if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			w.Write([]byte("invalid `from` param, expected UNIX timestamp"))
+			return
+		}
+
+		from = time.Unix(fromInt, 0).In(loc)
+	}
+
+	// get current service IDs
+	serviceIds, err := gtfs.GetActiveServiceIDs(&from, scheduleDb.DB)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte("internal server error"))
+		return
+	}
+
+	to := from.Add(60 * time.Minute)
+
+	// get upcoming departures
+	query, args, err := sqlx.In(`select
+		routes.route_id,
+		routes.route_short_name,
+		routes.route_long_name,
+		stop_times.departure_time,
+		trips.trip_headsign,
+		trips.trip_id,
+		trips.direction_id,
+		stop_times.stop_id,
+		EXISTS (
+			SELECT * from stop_times st2 inner join trips t2 on t2.trip_id = st2.trip_id where st2.stop_id = stop_times.stop_id and t2.service_id IN (?) and (st2.departure_timestamp <= stop_times.departure_timestamp + 300) and (st2.departure_timestamp >= stop_times.departure_timestamp - 300 and stop_times.trip_id != st2.trip_id AND trips.direction_id != t2.direction_id)
+		) AS passing_train
+	from stop_times
+	inner join trips on trips.trip_id = stop_times.trip_id
+	inner join routes on routes.route_id = trips.route_id
+	where trips.service_id IN (?) and stop_times.stop_id IN (?) and stop_times.departure_time >= ? and stop_times.departure_time < ?
+	order by stop_times.departure_time asc`, serviceIds, serviceIds, stationIds, from.Format("15:04:05"), to.Format("15:04:05"))
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte("internal server error"))
+		return
+	}
+
+	dbDepartures := []DbDeparture{}
+	err = scheduleDb.Select(&dbDepartures, query, args...)
+	if err != nil {
+		log.Println(err)
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte("internal server error"))
+		return
+	}
+
+	departures := make([]Departure, 0, len(dbDepartures))
+
+	for _, departure := range dbDepartures {
+		t, err := time.Parse("15:04:05", departure.DepartureTime)
+		if err != nil {
+			continue
+		}
+
+		departures = append(departures, Departure{
+			Route: Route{
+				ID:        departure.RouteId,
+				ShortName: departure.RouteShortName,
+				LongName:  departure.RouteLongName,
+			},
+			DepartureTime:     time.Date(from.Year(), from.Month(), from.Day(), t.Hour(), t.Minute(), t.Second(), 0, loc),
+			Headsign:          departure.TripHeadsign,
+			PredictedPlatform: predictPlatform(departure),
+		})
+	}
+
+	response, _ := json.Marshal(ApiDepartures{
+		Departures: departures,
+		To:         to,
+	})
+
+	w.Header().Add("Content-Type", "application/json")
+	w.Write(response)
+}
+
 func main() {
 	fmt.Println("Opening database...")
 
-	_db, err := sql.Open("sqlite3", "uta-gtfs.db")
+	_db, err := sqlx.Open("sqlite3", "uta-gtfs.db")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -342,6 +508,7 @@ func main() {
 	http.HandleFunc("/api.json", vehicleHandler("json"))
 	http.HandleFunc("/api/trips/{trip}", tripHandler)
 	http.HandleFunc("/api/shapes/{shape}", shapeHandler)
+	http.HandleFunc("/api/upcoming-departures", upcomingDeparturesHandler)
 
 	port := "3000"
 	if portEnv, ok := os.LookupEnv("PORT"); ok {
