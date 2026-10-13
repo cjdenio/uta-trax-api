@@ -1,6 +1,6 @@
 all: bin
 
-bin: cmd/main.go proto/*.go
+bin: cmd/main.go proto/*.go pkg/**/*.go
 	go build -o bin cmd/main.go
 
 proto: proto/schema.pb.go proto/gtfs-realtime.pb.go
