@@ -394,6 +394,21 @@ func predictPlatform(d DbDeparture) int {
 	return data[idx]
 }
 
+func addToTime(h, m, s, add int) (int, int, int) {
+	s += add
+	if s >= 60 {
+		m += s / 60
+		s = s % 60
+
+		if m >= 60 {
+			h += m / 60
+			m = m % 60
+		}
+	}
+
+	return h, m, s
+}
+
 func upcomingDeparturesHandler(w http.ResponseWriter, r *http.Request) {
 	stationIds := strings.Split(r.URL.Query().Get("stationIds"), ",")
 	if r.URL.Query().Get("stationIds") == "" || len(stationIds) == 0 {
@@ -425,7 +440,8 @@ func upcomingDeparturesHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	to := from.Add(60 * time.Minute)
+	toH, toM, toS := addToTime(from.Hour(), from.Minute(), from.Second(), 60*60)
+	to := from.Add(time.Hour)
 
 	// get upcoming departures
 	query, args, err := sqlx.In(`select
@@ -444,7 +460,7 @@ func upcomingDeparturesHandler(w http.ResponseWriter, r *http.Request) {
 	inner join trips on trips.trip_id = stop_times.trip_id
 	inner join routes on routes.route_id = trips.route_id
 	where trips.service_id IN (?) and stop_times.stop_id IN (?) and stop_times.departure_time >= ? and stop_times.departure_time < ?
-	order by stop_times.departure_time asc`, serviceIds, serviceIds, stationIds, from.Format("15:04:05"), to.Format("15:04:05"))
+	order by stop_times.departure_time asc`, serviceIds, serviceIds, stationIds, from.Format("15:04:05"), fmt.Sprintf("%02d:%02d:%02d", toH, toM, toS))
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte("internal server error"))
