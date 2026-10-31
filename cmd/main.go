@@ -235,8 +235,9 @@ func vehicleHandler(mode string) http.HandlerFunc {
 			}
 		}
 
+		feed := feedifyVehicles(vehicles, header, routeTypeFilter)
+
 		if mode == "json" || r.Header.Get("Accept") == "application/json" {
-			feed := feedifyVehicles(vehicles, header, routeTypeFilter)
 			response, err := json.Marshal(&feed)
 			if err != nil {
 				log.Println(err)
@@ -248,8 +249,6 @@ func vehicleHandler(mode string) http.HandlerFunc {
 			w.Write(response)
 		} else {
 			// send a protobuf
-
-			feed := feedifyVehicles(vehicles, header, routeTypeFilter)
 			b, err := proto.Marshal(&feed)
 			if err != nil {
 				log.Println(err)
