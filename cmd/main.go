@@ -355,8 +355,10 @@ type DbDeparture struct {
 	PassingTrain   bool   `db:"passing_train"`
 }
 
+// format: "NORTH (passing)", "SOUTH (passing)", "NORTH", "SOUTH"
+// "1" is the western track, "2" is the eastern track, "0" is unknown track
 var predictionData map[string][4]int = map[string][4]int{
-	"21760": {1, 2, 0, 0}, // Roy Station
+	"21760": {1, 2, 1, 1}, // Roy Station
 	"21757": {0, 0, 1, 1}, // Clearfield Station
 	"21772": {1, 2, 0, 0}, // Layton Station
 	"21758": {0, 0, 1, 1}, // Farmington Station
@@ -393,8 +395,8 @@ func predictPlatform(d DbDeparture) int {
 	return data[idx]
 }
 
-func addToTime(h, m, s, add int) (int, int, int) {
-	s += add
+func addToTime(h, m, s, secsToAdd int) (int, int, int) {
+	s += secsToAdd
 	if s >= 60 {
 		m += s / 60
 		s = s % 60
@@ -439,8 +441,22 @@ func upcomingDeparturesHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	toH, toM, toS := addToTime(from.Hour(), from.Minute(), from.Second(), 60*60)
-	to := from.Add(time.Hour)
+	var timeToAdd time.Duration = time.Minute * 60
+
+	toStr := r.URL.Query().Get("to")
+	if toStr != "" {
+		toInt, err := strconv.ParseInt(toStr, 10, 64)
+		if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			w.Write([]byte("invalid `to` param, expected UNIX timestamp"))
+			return
+		}
+
+		timeToAdd = time.Duration(toInt) * time.Second
+	}
+
+	toH, toM, toS := addToTime(from.Hour(), from.Minute(), from.Second(), int(timeToAdd.Seconds()))
+	to := from.Add(timeToAdd)
 
 	// get upcoming departures
 	query, args, err := sqlx.In(`select
